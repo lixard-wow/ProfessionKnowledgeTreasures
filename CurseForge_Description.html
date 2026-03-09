@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profession Knowledge Tracker — CurseForge Description</title>
+</head>
+<body>
+
+<h2>Profession Knowledge Tracker</h2>
+<p>
+    Automatically tracks and routes you to every <strong>profession knowledge treasure</strong>
+    in the Midnight expansion zones. Designed for players who want to max out their crafting
+    professions efficiently without manually hunting down each collectible.
+</p>
+
+<h3>Features</h3>
+<ul>
+    <li><strong>Auto-detects your professions</strong> — only shows treasures relevant to what you have learned</li>
+    <li><strong>Optimized route</strong> — uses nearest-neighbor + 2-opt path optimization to minimize travel time within each zone</li>
+    <li><strong>Smart zone ordering</strong> — starts from wherever you are and continues in the most efficient zone order</li>
+    <li><strong>Portal suggestions</strong> — tells you which portal to take when moving between zones, with a map pin placed directly on the portal</li>
+    <li><strong>Auto-advances on loot</strong> — waypoint automatically moves to the next treasure after you collect one</li>
+    <li><strong>Native WoW waypoints</strong> — places the blizzard waypoint pin and super-tracks it automatically</li>
+    <li><strong>TomTom support</strong> — if TomTom is installed, waypoints are added there as well</li>
+    <li><strong>Darkmoon Faire helper</strong> — built-in guide for the +2 knowledge quests available each month at the Darkmoon Faire, with vendor locations, required items, and step-by-step instructions</li>
+    <li><strong>Phasing notes</strong> — items that are phase-locked or require quest completion are clearly labeled</li>
+    <li><strong>Progress tracking</strong> — see remaining treasures broken down by profession at a glance</li>
+</ul>
+
+<h3>Supported Zones</h3>
+<ul>
+    <li>Silvermoon City</li>
+    <li>Eversong Woods</li>
+    <li>Zul'Aman</li>
+    <li>Atal'Aman</li>
+    <li>Voidstorm / Slayer's Rise</li>
+    <li>Harandar / The Den</li>
+</ul>
+
+<h3>Supported Professions</h3>
+<p>
+    Alchemy, Blacksmithing, Enchanting, Engineering, Herbalism, Inscription,
+    Jewelcrafting, Leatherworking, Mining, Skinning, Tailoring
+</p>
+
+<h3>Commands</h3>
+<p>Type <code>/pkt</code> or <code>/profknowledge</code> to open or close the tracker window.</p>
+<ul>
+    <li><code>/pkt</code> — toggle the tracker window</li>
+    <li><code>/pkt next</code> — jump to the next treasure in the route</li>
+    <li><code>/pkt prev</code> — go back to the previous treasure</li>
+    <li><code>/pkt first</code> — jump to the first uncollected treasure</li>
+    <li><code>/pkt nearest</code> — jump to the nearest treasure in your current zone</li>
+    <li><code>/pkt reload</code> — rebuild the route (use after logging in or switching characters)</li>
+    <li><code>/pkt dmf</code> — open the Darkmoon Faire knowledge quest helper</li>
+    <li><code>/pkt list</code> — print all remaining treasures to chat</li>
+    <li><code>/pkt mapid</code> — print your current map ID (for bug reporting)</li>
+</ul>
+
+<h3>How It Works</h3>
+<p>
+    On login, the addon scans your professions and builds an optimized route through all
+    uncollected treasures. It places a waypoint on the first item and automatically moves
+    to the next after each loot. When you need to travel to a different zone, it identifies
+    the correct portal and places the waypoint directly on it. The frame stays visible until
+    all treasures are collected, and reappears on login if any remain.
+</p>
+
+<h3>Notes</h3>
+<ul>
+    <li>Some items in Atal'Aman are phased and only visible after completing the local storyline</li>
+    <li>Some items require specific quest or achievement progress — notes are shown in the tracker when applicable</li>
+    <li>The Darkmoon Faire quests reset monthly and grant +2 knowledge per profession</li>
+</ul>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-PKR = PKR or {}
+PKT = PKT or {}
 
 local frame
 
@@ -13,13 +13,13 @@ end
 local function CountRemaining(list)
     local n = 0
     for _, t in ipairs(list) do
-        if not PKR.IsLooted(t) then n = n + 1 end
+        if not PKT.IsLooted(t) then n = n + 1 end
     end
     return n
 end
 
 local function CreateTrackerFrame()
-    local f = CreateFrame("Frame", "PKRTrackerFrame", UIParent, "BackdropTemplate")
+    local f = CreateFrame("Frame", "PKTTrackerFrame", UIParent, "BackdropTemplate")
     f:SetSize(320, 240)
     f:SetPoint("CENTER")
     f:SetMovable(true)
@@ -102,19 +102,19 @@ local function CreateTrackerFrame()
     local btnW = 54
     local btnGap = 3
 
-    local prevBtn = MakeButton(f, "< Prev", btnW, function() PKR.GoPrev() end)
+    local prevBtn = MakeButton(f, "< Prev", btnW, function() PKT.GoPrev() end)
     prevBtn:SetPoint("BOTTOMLEFT", f, "BOTTOM", -(btnW * 2 + btnGap * 2 + btnW / 2), btnY)
 
-    local nearBtn = MakeButton(f, "Nearest", btnW, function() PKR.GoNearest() end)
+    local nearBtn = MakeButton(f, "Nearest", btnW, function() PKT.GoNearest() end)
     nearBtn:SetPoint("LEFT", prevBtn, "RIGHT", btnGap, 0)
 
-    local firstBtn = MakeButton(f, "First", btnW, function() PKR.GoFirst() end)
+    local firstBtn = MakeButton(f, "First", btnW, function() PKT.GoFirst() end)
     firstBtn:SetPoint("LEFT", nearBtn, "RIGHT", btnGap, 0)
 
-    local nextBtn = MakeButton(f, "Next >", btnW, function() PKR.GoNext() end)
+    local nextBtn = MakeButton(f, "Next >", btnW, function() PKT.GoNext() end)
     nextBtn:SetPoint("LEFT", firstBtn, "RIGHT", btnGap, 0)
 
-    local reloadBtn = MakeButton(f, "Reload", btnW, function() PKR.Reload() end)
+    local reloadBtn = MakeButton(f, "Reload", btnW, function() PKT.Reload() end)
     reloadBtn:SetPoint("LEFT", nextBtn, "RIGHT", btnGap, 0)
 
     local closeBtn = MakeButton(f, "X", 22, function()
@@ -127,7 +127,7 @@ local function CreateTrackerFrame()
 end
 
 local function UpdateProfBreakdown()
-    local breakdown = PKR.GetProfBreakdown()
+    local breakdown = PKT.GetProfBreakdown()
     if #breakdown == 0 then frame.profBreakdown:SetText(""); return end
     local lines = {}
     for _, entry in ipairs(breakdown) do
@@ -140,14 +140,14 @@ local function UpdateProfBreakdown()
     frame.profBreakdown:SetText(table.concat(lines, "\n"))
 end
 
-function PKR.UpdateUI()
+function PKT.UpdateUI()
     if not frame or not frame:IsShown() then return end
     local playerMapID = C_Map.GetBestMapForUnit("player")
-    local zoneName = (playerMapID and PKR.ZONE_NAMES[playerMapID]) or "Unknown Zone"
+    local zoneName = (playerMapID and PKT.ZONE_NAMES[playerMapID]) or "Unknown Zone"
     local hereRemaining = 0
     local zoneGroup = { playerMapID }
-    if PKR.ZONE_GROUPS and playerMapID then
-        for _, g in ipairs(PKR.ZONE_GROUPS) do
+    if PKT.ZONE_GROUPS and playerMapID then
+        for _, g in ipairs(PKT.ZONE_GROUPS) do
             for _, id in ipairs(g) do
                 if id == playerMapID then zoneGroup = g; break end
             end
@@ -155,33 +155,33 @@ function PKR.UpdateUI()
     end
     local groupSet = {}
     for _, id in ipairs(zoneGroup) do groupSet[id] = true end
-    for _, t in ipairs(PKR.GetRouteList()) do
-        if groupSet[t.mapID] and not PKR.IsLooted(t) then hereRemaining = hereRemaining + 1 end
+    for _, t in ipairs(PKT.GetRouteList()) do
+        if groupSet[t.mapID] and not PKT.IsLooted(t) then hereRemaining = hereRemaining + 1 end
     end
     if hereRemaining > 0 then
         frame.zoneIndicator:SetText(string.format("You are in: |cffffff00%s|r  (%d treasure(s) here)", zoneName, hereRemaining))
     else
         local t2 = nil
-        for _, item in ipairs(PKR.GetRouteList()) do
-            if not PKR.IsLooted(item) and item.mapID ~= playerMapID then
+        for _, item in ipairs(PKT.GetRouteList()) do
+            if not PKT.IsLooted(item) and item.mapID ~= playerMapID then
                 t2 = item
                 break
             end
         end
         local portalHint = ""
         if t2 and playerMapID then
-            local portal = PKR.GetPortalSuggestion(playerMapID, t2.mapID)
+            local portal = PKT.GetPortalSuggestion(playerMapID, t2.mapID)
             if portal then
                 portalHint = string.format("\n|cffff9900Take: %s|r", portal.name)
             else
-                portalHint = string.format("\n|cffff9900Head to: %s|r", PKR.ZONE_NAMES[t2.mapID] or "?")
+                portalHint = string.format("\n|cffff9900Head to: %s|r", PKT.ZONE_NAMES[t2.mapID] or "?")
             end
         end
         frame.zoneIndicator:SetText(string.format("You are in: |cffffff00%s|r  |cff888888(none here)|r%s", zoneName, portalHint))
     end
-    local list = PKR.GetRouteList()
+    local list = PKT.GetRouteList()
     local remaining = CountRemaining(list)
-    local t, _, total = PKR.GetCurrent()
+    local t, _, total = PKT.GetCurrent()
     if total == 0 then
         frame.treasureName:SetText("|cffaaaaaa(No professions found - type /pkt reload)|r")
         frame.zoneCoords:SetText("")
@@ -207,26 +207,26 @@ function PKR.UpdateUI()
         return
     end
     frame.treasureName:SetText("|cffffff00" .. t.name .. "|r")
-    local targetZone = PKR.ZONE_NAMES[t.mapID] or "Unknown"
+    local targetZone = PKT.ZONE_NAMES[t.mapID] or "Unknown"
     frame.zoneCoords:SetText(string.format("%s  |cff88bbff%.1f, %.1f|r", targetZone, t.x * 100, t.y * 100))
     frame.notes:SetText(t.notes or "")
     frame.progress:SetText(string.format("|cffaaaaaa%d remaining of %d total|r", remaining, total))
     UpdateProfBreakdown()
 end
 
-function PKR.ShowUI()
+function PKT.ShowUI()
     if not frame then frame = CreateTrackerFrame() end
     frame:Show()
-    PKR.UpdateUI()
+    PKT.UpdateUI()
 end
 
-function PKR.ToggleUI()
+function PKT.ToggleUI()
     if not frame then frame = CreateTrackerFrame() end
     if frame:IsShown() then
         frame:Hide()
     else
         frame:Show()
-        PKR.UpdateUI()
+        PKT.UpdateUI()
     end
 end
 
@@ -278,7 +278,7 @@ local function UpdateDMFContent()
 end
 
 local function CreateDMFFrame()
-    local f = CreateFrame("Frame", "PKRDMFFrame", UIParent, "BackdropTemplate")
+    local f = CreateFrame("Frame", "PKTDMFFrame", UIParent, "BackdropTemplate")
     f:SetSize(390, 410)
     f:SetPoint("CENTER", 0, 0)
     f:SetMovable(true)
@@ -354,26 +354,26 @@ local function EnsureDMFFrame()
     if not dmfFrame then dmfFrame = CreateDMFFrame() end
 end
 
-function PKR.ShowDMFUI()
+function PKT.ShowDMFUI()
     EnsureDMFFrame()
-    dmfProfList = PKR.GetActiveDMFProfs()
+    dmfProfList = PKT.GetActiveDMFProfs()
     if dmfProfIndex > #dmfProfList then dmfProfIndex = 1 end
     UpdateDMFContent()
     dmfFrame:Show()
 end
 
-function PKR.HideDMFUI()
+function PKT.HideDMFUI()
     if dmfFrame then dmfFrame:Hide() end
 end
 
-function PKR.IsDMFShown()
+function PKT.IsDMFShown()
     return dmfFrame and dmfFrame:IsShown()
 end
 
-function PKR.ToggleDMFUI()
+function PKT.ToggleDMFUI()
     EnsureDMFFrame()
     if dmfFrame:IsShown() then dmfFrame:Hide()
-    else PKR.ShowDMFUI() end
+    else PKT.ShowDMFUI() end
 end
 
 local initFrame = CreateFrame("Frame")

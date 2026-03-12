@@ -1,5 +1,5 @@
 ---@diagnostic disable: undefined-global
-PKR = PKR or {}
+PKT = PKT or {}
 
 local currentWaypointUID
 local currentIndex = 0
@@ -30,8 +30,8 @@ local function GetPlayerZoneAndPos()
 end
 
 local function GetZoneGroup(mapID)
-    if not PKR.ZONE_GROUPS then return { mapID } end
-    for _, group in ipairs(PKR.ZONE_GROUPS) do
+    if not PKT.ZONE_GROUPS then return { mapID } end
+    for _, group in ipairs(PKT.ZONE_GROUPS) do
         for _, id in ipairs(group) do
             if id == mapID then return group end
         end
@@ -46,7 +46,7 @@ end
 local function IsLooted(treasure)
     return C_QuestLog.IsQuestFlaggedCompleted(treasure.quest)
 end
-PKR.IsLooted = IsLooted
+PKT.IsLooted = IsLooted
 
 local function TwoOpt(route)
     local n = #route
@@ -108,16 +108,16 @@ local function BuildRoute()
     if playerMapID then
         local group = GetZoneGroup(playerMapID)
         local orderSet = {}
-        for _, id in ipairs(PKR.ZONE_ORDER) do orderSet[id] = true end
+        for _, id in ipairs(PKT.ZONE_ORDER) do orderSet[id] = true end
         for _, id in ipairs(group) do
             if orderSet[id] then playerZoneID = id; break end
         end
     end
     local byZone = {}
-    for profID in pairs(PKR.PROF_NAMES) do
+    for profID in pairs(PKT.PROF_NAMES) do
         if HasProfession(profID) then
             activeProfIDs[profID] = true
-            local treasures = PKR.TREASURES[profID]
+            local treasures = PKT.TREASURES[profID]
             if treasures then
                 for _, t in ipairs(treasures) do
                     if not byZone[t.mapID] then byZone[t.mapID] = {} end
@@ -127,7 +127,7 @@ local function BuildRoute()
         end
     end
     local currentOrderIdx = 0
-    for i, mapID in ipairs(PKR.ZONE_ORDER) do
+    for i, mapID in ipairs(PKT.ZONE_ORDER) do
         if mapID == playerZoneID then currentOrderIdx = i; break end
     end
     local zoneOrder = {}
@@ -135,16 +135,16 @@ local function BuildRoute()
         table.insert(zoneOrder, playerZoneID)
     end
     if currentOrderIdx > 0 then
-        for i = currentOrderIdx + 1, #PKR.ZONE_ORDER do
-            local mapID = PKR.ZONE_ORDER[i]
+        for i = currentOrderIdx + 1, #PKT.ZONE_ORDER do
+            local mapID = PKT.ZONE_ORDER[i]
             if mapID ~= playerZoneID and byZone[mapID] then table.insert(zoneOrder, mapID) end
         end
         for i = 1, currentOrderIdx - 1 do
-            local mapID = PKR.ZONE_ORDER[i]
+            local mapID = PKT.ZONE_ORDER[i]
             if mapID ~= playerZoneID and byZone[mapID] then table.insert(zoneOrder, mapID) end
         end
     else
-        for _, mapID in ipairs(PKR.ZONE_ORDER) do
+        for _, mapID in ipairs(PKT.ZONE_ORDER) do
             if mapID ~= playerZoneID and byZone[mapID] then table.insert(zoneOrder, mapID) end
         end
     end
@@ -202,7 +202,7 @@ local function SetWaypointAt(index)
             if id == t.mapID then sameGroup = true; break end
         end
     end
-    local portal = (playerMapID ~= t.mapID) and not sameGroup and PKR.GetPortalSuggestion(playerMapID, t.mapID)
+    local portal = (playerMapID ~= t.mapID) and not sameGroup and PKT.GetPortalSuggestion(playerMapID, t.mapID)
     if portal then
         SetNativeWaypoint(portal.mapID, portal.x, portal.y)
         if TomTom then
@@ -213,7 +213,7 @@ local function SetWaypointAt(index)
             })
         end
         print(string.format("|cff00ccff[PKT]|r Take |cffff9900%s|r → |cffffff00%s|r in |cffaaaaaa%s|r (%.1f, %.1f)",
-            portal.name, t.name, PKR.ZONE_NAMES[t.mapID] or "?", t.x * 100, t.y * 100))
+            portal.name, t.name, PKT.ZONE_NAMES[t.mapID] or "?", t.x * 100, t.y * 100))
     else
         SetNativeWaypoint(t.mapID, t.x, t.y)
         if TomTom then
@@ -223,24 +223,24 @@ local function SetWaypointAt(index)
                 persistent = false, minimap = true, world = true, crazy = true,
             })
         end
-        local zoneName = PKR.ZONE_NAMES[t.mapID] or "Unknown"
+        local zoneName = PKT.ZONE_NAMES[t.mapID] or "Unknown"
         print(string.format("|cff00ccff[PKT]|r Next: |cffffff00%s|r in |cffaaaaaa%s|r (%.1f, %.1f)%s",
             t.name, zoneName, t.x * 100, t.y * 100,
             t.notes and ("|cffff9900  [" .. t.notes .. "]|r") or ""))
     end
-    PKR.UpdateUI()
+    PKT.UpdateUI()
 end
 
 local autoAdvancePending = false
 local function CheckAutoAdvance()
     if autoAdvancePending then return end
     if #routeList == 0 or currentIndex == 0 then
-        PKR.UpdateUI()
+        PKT.UpdateUI()
         return
     end
     local current = routeList[currentIndex]
     if current and not IsLooted(current) then
-        PKR.UpdateUI()
+        PKT.UpdateUI()
         return
     end
     if not JumpToNearestInZone() then
@@ -250,7 +250,7 @@ local function CheckAutoAdvance()
         else
             ClearCurrentWaypoint()
             currentIndex = 0
-            PKR.UpdateUI()
+            PKT.UpdateUI()
             print("|cff00ff00[PKT]|r All profession knowledge treasures collected! Grats!")
         end
     end
@@ -272,7 +272,7 @@ JumpToNearestInZone = function()
     if bestIdx then SetWaypointAt(bestIdx); return true end
     return false
 end
-PKR.JumpToNearestInZone = JumpToNearestInZone
+PKT.JumpToNearestInZone = JumpToNearestInZone
 
 local function IsPortalUnlocked(portal)
     if not portal.unlockQuest then return true end
@@ -280,8 +280,8 @@ local function IsPortalUnlocked(portal)
 end
 
 local function IsFlyable(fromMapID, toMapID)
-    if not PKR.ZONE_FLYABLE then return false end
-    for _, pair in ipairs(PKR.ZONE_FLYABLE) do
+    if not PKT.ZONE_FLYABLE then return false end
+    for _, pair in ipairs(PKT.ZONE_FLYABLE) do
         if (pair[1] == fromMapID and pair[2] == toMapID) or
            (pair[2] == fromMapID and pair[1] == toMapID) then
             return true
@@ -290,7 +290,7 @@ local function IsFlyable(fromMapID, toMapID)
     return false
 end
 
-function PKR.GetPortalSuggestion(fromMapID, toMapID)
+function PKT.GetPortalSuggestion(fromMapID, toMapID)
     if not fromMapID or not toMapID then return nil end
     local fromGroup = GetZoneGroup(fromMapID)
     local toGroup = GetZoneGroup(toMapID)
@@ -299,16 +299,16 @@ function PKR.GetPortalSuggestion(fromMapID, toMapID)
     for _, id in ipairs(toGroup) do toSet[id] = true end
     if toSet[fromMapID] then return nil end
     if IsFlyable(fromMapID, toMapID) then return nil end
-    for _, portal in ipairs(PKR.PORTALS) do
+    for _, portal in ipairs(PKT.PORTALS) do
         if fromSet[portal.mapID] and toSet[portal.dest] and IsPortalUnlocked(portal) then
             return portal
         end
     end
     local hubMapID = nil
-    if PKR.ZONE_TRANSIT then
+    if PKT.ZONE_TRANSIT then
         for _, id in ipairs(fromGroup) do
-            if PKR.ZONE_TRANSIT[id] then
-                hubMapID = PKR.ZONE_TRANSIT[id]
+            if PKT.ZONE_TRANSIT[id] then
+                hubMapID = PKT.ZONE_TRANSIT[id]
                 break
             end
         end
@@ -319,7 +319,7 @@ function PKR.GetPortalSuggestion(fromMapID, toMapID)
         local hubSet = {}
         for _, id in ipairs(hubGroup) do hubSet[id] = true end
         local hubCanReach = false
-        for _, portal in ipairs(PKR.PORTALS) do
+        for _, portal in ipairs(PKT.PORTALS) do
             if hubSet[portal.mapID] and toSet[portal.dest] and IsPortalUnlocked(portal) then
                 hubCanReach = true; break
             end
@@ -331,7 +331,7 @@ function PKR.GetPortalSuggestion(fromMapID, toMapID)
         end
         if hubCanReach then
             local best, bestDist = nil, math.huge
-            for _, portal in ipairs(PKR.PORTALS) do
+            for _, portal in ipairs(PKT.PORTALS) do
                 if fromSet[portal.mapID] and hubSet[portal.dest] and IsPortalUnlocked(portal) then
                     local d = DistSq(px, py, portal.x, portal.y)
                     if d < bestDist then bestDist = d; best = portal end
@@ -339,14 +339,14 @@ function PKR.GetPortalSuggestion(fromMapID, toMapID)
             end
             if best then return best end
         end
-        for _, portal in ipairs(PKR.PORTALS) do
+        for _, portal in ipairs(PKT.PORTALS) do
             if hubSet[portal.mapID] and toSet[portal.dest] and IsPortalUnlocked(portal) then
                 return portal
             end
         end
     end
     local best, bestDist = nil, math.huge
-    for _, portal in ipairs(PKR.PORTALS) do
+    for _, portal in ipairs(PKT.PORTALS) do
         if fromSet[portal.mapID] and IsPortalUnlocked(portal) then
             local d = DistSq(px, py, portal.x, portal.y)
             if d < bestDist then bestDist = d; best = portal end
@@ -355,74 +355,74 @@ function PKR.GetPortalSuggestion(fromMapID, toMapID)
     return best
 end
 
-function PKR.GetCurrent()
+function PKT.GetCurrent()
     return routeList[currentIndex], currentIndex, #routeList
 end
 
-function PKR.GetRouteList()
+function PKT.GetRouteList()
     return routeList
 end
 
-function PKR.GetProfBreakdown()
+function PKT.GetProfBreakdown()
     local result = {}
     for profID in pairs(activeProfIDs) do
-        local treasures = PKR.TREASURES[profID]
+        local treasures = PKT.TREASURES[profID]
         local remaining, total = 0, treasures and #treasures or 0
         if treasures then
             for _, t in ipairs(treasures) do
                 if not IsLooted(t) then remaining = remaining + 1 end
             end
         end
-        table.insert(result, { name = PKR.PROF_NAMES[profID], remaining = remaining, total = total })
+        table.insert(result, { name = PKT.PROF_NAMES[profID], remaining = remaining, total = total })
     end
     table.sort(result, function(a, b) return a.name < b.name end)
     return result
 end
 
-function PKR.GoNext()
+function PKT.GoNext()
     local idx = FindNextIncomplete(currentIndex + 1)
     if idx then SetWaypointAt(idx)
     else print("|cff00ccff[PKT]|r No more incomplete treasures ahead.") end
 end
 
-function PKR.GoPrev()
+function PKT.GoPrev()
     local idx = FindPrevIncomplete(currentIndex - 1)
     if idx then SetWaypointAt(idx)
     else print("|cff00ccff[PKT]|r No more incomplete treasures before this one.") end
 end
 
-function PKR.GoFirst()
+function PKT.GoFirst()
     local idx = FindNextIncomplete(1)
     if idx then SetWaypointAt(idx)
     else print("|cff00ff00[PKT]|r All done!") end
 end
 
-function PKR.GoNearest()
-    if not JumpToNearestInZone() then PKR.GoFirst() end
+function PKT.GoNearest()
+    if not JumpToNearestInZone() then PKT.GoFirst() end
 end
 
-function PKR.GetActiveDMFProfs()
-    if not PKR.DMF_QUESTS then return {} end
+function PKT.GetActiveDMFProfs()
+    if not PKT.DMF_QUESTS then return {} end
     local result = {}
-    for profID in pairs(PKR.PROF_NAMES) do
-        if HasProfession(profID) and PKR.DMF_QUESTS[profID] then
-            local q = PKR.DMF_QUESTS[profID]
+    for profID in pairs(PKT.PROF_NAMES) do
+        if HasProfession(profID) and PKT.DMF_QUESTS[profID] then
+            local q = PKT.DMF_QUESTS[profID]
             local done = C_QuestLog.IsQuestFlaggedCompleted(q.questID)
-            table.insert(result, { profID = profID, name = PKR.PROF_NAMES[profID], quest = q, done = done })
+            table.insert(result, { profID = profID, name = PKT.PROF_NAMES[profID], quest = q, done = done })
         end
     end
     table.sort(result, function(a, b) return a.name < b.name end)
     return result
 end
 
-function PKR.Reload()
+function PKT.Reload()
     BuildRoute()
     local remaining = 0
     for _, t in ipairs(routeList) do
         if not IsLooted(t) then remaining = remaining + 1 end
     end
     if remaining == 0 then
-        PKR.UpdateUI()
+        PKT.UpdateUI()
         print("|cff00ff00[PKT]|r All profession knowledge treasures already collected!")
         return
     end
@@ -438,12 +438,12 @@ SLASH_PKT1 = "/pkt"
 SLASH_PKT2 = "/profknowledge"
 SlashCmdList["PKT"] = function(msg)
     local cmd = strtrim(msg):lower()
-    if     cmd == "next"    then PKR.GoNext()
-    elseif cmd == "prev"    then PKR.GoPrev()
-    elseif cmd == "first"   then PKR.GoFirst()
-    elseif cmd == "nearest" then PKR.GoNearest()
-    elseif cmd == "reload"  then PKR.Reload()
-    elseif cmd == "dmf"     then PKR.ToggleDMFUI()
+    if     cmd == "next"    then PKT.GoNext()
+    elseif cmd == "prev"    then PKT.GoPrev()
+    elseif cmd == "first"   then PKT.GoFirst()
+    elseif cmd == "nearest" then PKT.GoNearest()
+    elseif cmd == "reload"  then PKT.Reload()
+    elseif cmd == "dmf"     then PKT.ToggleDMFUI()
     elseif cmd == "mapid"   then
         local mapID = C_Map.GetBestMapForUnit("player")
         local mapInfo = mapID and C_Map.GetMapInfo(mapID)
@@ -454,14 +454,14 @@ SlashCmdList["PKT"] = function(msg)
         for i, t in ipairs(routeList) do
             if not IsLooted(t) then
                 count = count + 1
-                local zoneName = PKR.ZONE_NAMES[t.mapID] or "?"
+                local zoneName = PKT.ZONE_NAMES[t.mapID] or "?"
                 print(string.format("|cff00ccff[PKT]|r %d. |cffffff00%s|r - %s (%.1f, %.1f)",
                     i, t.name, zoneName, t.x * 100, t.y * 100))
             end
         end
         if count == 0 then print("|cff00ff00[PKT]|r All done!") end
     else
-        PKR.ToggleUI()
+        PKT.ToggleUI()
     end
 end
 
@@ -469,19 +469,19 @@ local dmfAutoOpened = false
 
 local function IsAtDarkmoonFaire()
     local mapID = C_Map.GetBestMapForUnit("player")
-    if mapID == PKR.DMF_MAP_ID then return true end
+    if mapID == PKT.DMF_MAP_ID then return true end
     return GetRealZoneText() == "Darkmoon Island"
 end
 
 local function CheckDMFZone()
     if IsAtDarkmoonFaire() then
-        if not PKR.IsDMFShown() then
+        if not PKT.IsDMFShown() then
             dmfAutoOpened = true
-            PKR.ShowDMFUI()
+            PKT.ShowDMFUI()
             print("|cff00ccff[PKT]|r |cffFFDD44Darkmoon Faire|r detected — showing knowledge quests.")
         end
     else
-        if dmfAutoOpened and PKR.IsDMFShown() then PKR.HideDMFUI() end
+        if dmfAutoOpened and PKT.IsDMFShown() then PKT.HideDMFUI() end
         dmfAutoOpened = false
     end
 end
@@ -504,9 +504,9 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
             if remaining > 0 then
                 print(string.format("|cff00ccff[PKT]|r %d profession knowledge treasure(s) remaining.",
                     remaining))
-                PKR.ShowUI()
+                PKT.ShowUI()
             end
-            PKR.UpdateUI()
+            PKT.UpdateUI()
             CheckDMFZone()
             C_Timer.NewTicker(3, function()
                 CheckAutoAdvance()
@@ -530,11 +530,11 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
                     local targetSet = {}
                     if targetGroup then for _, id in ipairs(targetGroup) do targetSet[id] = true end end
                     if not currentTarget or targetSet[playerMapID] then
-                        local zoneName = PKR.ZONE_NAMES[playerMapID] or "this zone"
+                        local zoneName = PKT.ZONE_NAMES[playerMapID] or "this zone"
                         print(string.format("|cff00ccff[PKT]|r Entered %s — jumping to nearest treasure.", zoneName))
                         JumpToNearestInZone()
                     else
-                        PKR.UpdateUI()
+                        PKT.UpdateUI()
                     end
                 else
                     local next = FindNextIncomplete(1)

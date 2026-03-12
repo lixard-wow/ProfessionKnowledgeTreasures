@@ -1,6 +1,6 @@
-PKR = PKR or {}
+PKT = PKT or {}
 
-PKR.ZONE_NAMES = {
+PKT.ZONE_NAMES = {
     [2393] = "Silvermoon City",
     [2395] = "Eversong Woods",
     [2437] = "Zul'Aman",
@@ -11,25 +11,25 @@ PKR.ZONE_NAMES = {
     [2576] = "The Den",
 }
 
-PKR.ZONE_ORDER = { 2393, 2395, 2437, 2536, 2405, 2444, 2413 }
+PKT.ZONE_ORDER = { 2393, 2395, 2437, 2536, 2405, 2444, 2413 }
 
-PKR.ZONE_GROUPS = {
+PKT.ZONE_GROUPS = {
     { 2413, 2576 },  -- Harandar + The Den
     { 2405, 2444 },  -- Voidstorm + Slayer's Rise
 }
 
-PKR.ZONE_FLYABLE = {
+PKT.ZONE_FLYABLE = {
     { 2393, 2395 },  -- Silvermoon City ↔ Eversong Woods
 }
 
-PKR.ZONE_TRANSIT = {
+PKT.ZONE_TRANSIT = {
     --[2437] = 2393,  -- Zul'Aman: no portal, use flight master
     [2536] = 2393,  -- Atal'Aman → route through Silvermoon
     [2395] = 2393,  -- Eversong Woods → route through Silvermoon
     [2413] = 2393,  -- Harandar → route through Silvermoon
 }
 
-PKR.PORTALS = {
+PKT.PORTALS = {
     { mapID=2393, x=0.3670, y=0.6857, name="Portal to Harandar",                   dest=2413, unlockQuest=nil },
     { mapID=2393, x=0.3528, y=0.6565, name="Portal to Voidstorm",                  dest=2405, unlockQuest=nil },
     { mapID=2576, x=0.6470, y=0.7110, name="Portal to Silvermoon (The Den)",       dest=2393, unlockQuest=nil },
@@ -39,7 +39,7 @@ PKR.PORTALS = {
 
 }
 
-PKR.PROF_NAMES = {
+PKT.PROF_NAMES = {
     [2906] = "Alchemy",
     [2907] = "Blacksmithing",
     [2909] = "Enchanting",
@@ -53,11 +53,11 @@ PKR.PROF_NAMES = {
     [2918] = "Tailoring",
 }
 
-PKR.TREASURES = {}
+PKT.TREASURES = {}
 
 local function Add(profID, mapID, x, y, questID, name, notes)
-    if not PKR.TREASURES[profID] then PKR.TREASURES[profID] = {} end
-    table.insert(PKR.TREASURES[profID], { name=name, mapID=mapID, x=x, y=y, quest=questID, notes=notes })
+    if not PKT.TREASURES[profID] then PKT.TREASURES[profID] = {} end
+    table.insert(PKT.TREASURES[profID], { name=name, mapID=mapID, x=x, y=y, quest=questID, notes=notes })
 end
 
 local SC, EW, ZA, AT, HR, VS, SR = 2393, 2395, 2437, 2536, 2413, 2405, 2444
@@ -160,9 +160,9 @@ Add(2918, HR, 0.7050, 0.5080, 89078, "A Child's Stuffy")
 Add(2918, SR, 0.6140, 0.8500, 89083, "Satin Throw Pillow")
 Add(2918, SR, 0.6200, 0.8350, 89082, "Book of Sin'dorei Stitches")
 
-PKR.DMF_MAP_ID = 974
+PKT.DMF_MAP_ID = 974
 
-PKR.DMF_QUESTS = {
+PKT.DMF_QUESTS = {
     [2906] = {
         vendor = "Sylannia", npcID = 14844,
         x = 0.4840, y = 0.4330, questID = 29506,

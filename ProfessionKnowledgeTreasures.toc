@@ -5,6 +5,6 @@
 ## Version: 1.0
 ## OptionalDeps: TomTom
 
-PKR_Data.lua
-PKR_Main.lua
-PKR_UI.lua
+PKT_Data.lua
+PKT_Main.lua
+PKT_UI.lua

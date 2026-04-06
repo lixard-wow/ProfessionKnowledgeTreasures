@@ -1,0 +1,8 @@
+package-as: ProfessionKnowledgeTreasures
+curse-project-id: 1488283
+ignore:
+  - .github
+  - .gitignore
+  - .pkgmeta
+  - "*.html"
+  - README.md

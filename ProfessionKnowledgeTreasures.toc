@@ -1,9 +1,15 @@
-## Interface: 120001, 120000
+## Interface: 120001
 ## Title: Profession Knowledge Treasures
 ## Notes: Tracks and routes Midnight profession knowledge treasures filtered to your character's professions. Type /pkt to open.
 ## Author: Lixard
 ## Version: 1.0
 ## OptionalDeps: TomTom
+## SavedVariables: PKT_SavedVars
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
 PKT_Data.lua
 PKT_Main.lua

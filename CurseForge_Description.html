@@ -9,22 +9,44 @@
 <h2>Profession Knowledge Treasures</h2>
 <p>
     Automatically tracks and routes you to every <strong>profession knowledge treasure</strong>
-    in the Midnight expansion zones. Designed for players who want to max out their crafting
-    professions efficiently without manually hunting down each collectible.
+    in the Midnight expansion zones, and includes a built-in guide for the monthly
+    <strong>Darkmoon Faire profession knowledge quests</strong>. Designed for players who want
+    to max out their crafting professions efficiently without manually hunting down each collectible.
 </p>
 
-<h3>Features</h3>
+<h3>Knowledge Treasures</h3>
 <ul>
     <li><strong>Auto-detects your professions</strong> — only shows treasures relevant to what you have learned</li>
     <li><strong>Optimized route</strong> — uses nearest-neighbor + 2-opt path optimization to minimize travel time within each zone</li>
     <li><strong>Smart zone ordering</strong> — starts from wherever you are and continues in the most efficient zone order</li>
     <li><strong>Portal suggestions</strong> — tells you which portal to take when moving between zones, with a map pin placed directly on the portal</li>
     <li><strong>Auto-advances on loot</strong> — waypoint automatically moves to the next treasure after you collect one</li>
-    <li><strong>Native WoW waypoints</strong> — places the blizzard waypoint pin and super-tracks it automatically</li>
-    <li><strong>TomTom support</strong> — if TomTom is installed, waypoints are added there as well</li>
-    <li><strong>Darkmoon Faire helper</strong> — built-in guide for the +2 knowledge quests available each month at the Darkmoon Faire, with vendor locations, required items, and step-by-step instructions</li>
-    <li><strong>Phasing notes</strong> — items that are phase-locked or require quest completion are clearly labeled</li>
+    <li><strong>Auto-jumps on zone change</strong> — when you enter a new zone, instantly waypoints you to the nearest uncollected treasure there</li>
+    <li><strong>Native WoW waypoints</strong> — places the Blizzard waypoint pin and super-tracks it automatically</li>
+    <li><strong>TomTom and Waypoint UI support</strong> — if TomTom or Waypoint UI is installed, waypoints are added there as well</li>
+    <li><strong>Phasing notes</strong> — items that are phase-locked or require quest/achievement completion are clearly labeled</li>
     <li><strong>Progress tracking</strong> — see remaining treasures broken down by profession at a glance</li>
+</ul>
+
+<h3>Darkmoon Faire Knowledge Quests</h3>
+<p>
+    Each month the Darkmoon Faire offers a <strong>+2 profession knowledge quest</strong> for every crafting profession.
+    The built-in DMF helper guides you through each one.
+</p>
+<ul>
+    <li><strong>Auto-opens on arrival</strong> — the DMF panel opens automatically when you enter Darkmoon Island</li>
+    <li><strong>Completion tracking</strong> — each quest is marked as Available or Done this Faire so you know exactly what's left</li>
+    <li><strong>Vendor locations</strong> — shows the NPC name and approximate coordinates on Darkmoon Island</li>
+    <li><strong>Items to bring</strong> — lists everything you need to gather or buy before heading to the faire, with tips on where to get each item</li>
+    <li><strong>Vendor-provided items</strong> — clearly shows what the quest NPC will hand you so you don't over-prepare</li>
+    <li><strong>Step-by-step instructions</strong> — numbered walkthrough for completing each quest from accept to turn-in</li>
+    <li><strong>Filtered to your professions</strong> — only shows DMF quests for professions your character has learned</li>
+</ul>
+
+<h3>Minimap Button</h3>
+<ul>
+    <li><strong>Left-click</strong> — toggle the treasure tracker window</li>
+    <li><strong>Right-click</strong> — toggle the Darkmoon Faire knowledge quest helper</li>
 </ul>
 
 <h3>Supported Zones</h3>
@@ -44,17 +66,8 @@
 </p>
 
 <h3>Commands</h3>
-<p>Type <code>/pkt</code> or <code>/profknowledge</code> to open or close the tracker window.</p>
 <ul>
     <li><code>/pkt</code> — toggle the tracker window</li>
-    <li><code>/pkt next</code> — jump to the next treasure in the route</li>
-    <li><code>/pkt prev</code> — go back to the previous treasure</li>
-    <li><code>/pkt first</code> — jump to the first uncollected treasure</li>
-    <li><code>/pkt nearest</code> — jump to the nearest treasure in your current zone</li>
-    <li><code>/pkt reload</code> — rebuild the route (use after logging in or switching characters)</li>
-    <li><code>/pkt dmf</code> — open the Darkmoon Faire knowledge quest helper</li>
-    <li><code>/pkt list</code> — print all remaining treasures to chat</li>
-    <li><code>/pkt mapid</code> — print your current map ID (for bug reporting)</li>
 </ul>
 
 <h3>How It Works</h3>
@@ -62,8 +75,14 @@
     On login, the addon scans your professions and builds an optimized route through all
     uncollected treasures. It places a waypoint on the first item and automatically moves
     to the next after each loot. When you need to travel to a different zone, it identifies
-    the correct portal and places the waypoint directly on it. The frame stays visible until
-    all treasures are collected, and reappears on login if any remain.
+    the correct portal and places the waypoint directly on it. Entering a new zone automatically
+    jumps to the nearest treasure there. The frame stays visible until all treasures are collected,
+    and reappears on login if any remain.
+</p>
+<p>
+    The Darkmoon Faire panel opens automatically when you zone into Darkmoon Island, showing
+    every profession quest filtered to your character with full instructions and completion status.
+    It closes automatically when you leave.
 </p>
 
 <h3>Notes</h3>

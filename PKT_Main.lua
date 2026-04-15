@@ -1,21 +1,40 @@
----@diagnostic disable: undefined-global
 PKT = PKT or {}
+PKT.testMode = false
+PKT.testProfs = {}
+
+local format = string.format
+local huge = math.huge
+
+local PKT_TAG    = "|cff00ccff[PKT]|r"
+local PKT_TAG_OK = "|cff00ff00[PKT]|r"
+local C_YELLOW   = "|cffffff00"
+local C_GRAY     = "|cffaaaaaa"
+local C_ORANGE   = "|cffff9900"
+local C_RED      = "|cffff4444"
+local C_GREEN    = "|cff00ff00"
+local C_GOLD     = "|cffFFDD44"
+local C_END      = "|r"
 
 local currentWaypointUID
 local currentIndex = 0
+local currentNativeMapID, currentNativeX, currentNativeY
 local routeList = {}
 local activeProfIDs = {}
 local JumpToNearestInZone
 
 local function HasProfession(skillLineID)
+    if PKT.testMode then return PKT.testProfs[skillLineID] == true end
     local info = C_TradeSkillUI and C_TradeSkillUI.GetProfessionInfoBySkillLineID(skillLineID)
     if info and info.skillLevel and info.skillLevel > 0 then return true end
+    local profName = PKT.PROF_NAMES[skillLineID]
     local slots = { GetProfessions() }
     for _, idx in ipairs(slots) do
         if idx then
-            local _, _, _, _, _, _, lineID = GetProfessionInfo(idx)
-            if lineID == skillLineID then return true end
-            if info and info.parentProfessionID and info.parentProfessionID == lineID then return true end
+            local name, _, _, _, _, _, lineID = GetProfessionInfo(idx)
+            if name then
+                if lineID == skillLineID then return true end
+                if profName and name == profName then return true end
+            end
         end
     end
     return false
@@ -39,14 +58,31 @@ local function GetZoneGroup(mapID)
     return { mapID }
 end
 
+local function GetZoneGroupSet(mapID)
+    local set = {}
+    for _, id in ipairs(GetZoneGroup(mapID)) do set[id] = true end
+    return set
+end
+PKT.GetZoneGroupSet = GetZoneGroupSet
+
 local function DistSq(ax, ay, bx, by)
-    return (ax - bx) ^ 2 + (ay - by) ^ 2
+    local dx, dy = ax - bx, ay - by
+    return dx * dx + dy * dy
 end
 
 local function IsLooted(treasure)
     return C_QuestLog.IsQuestFlaggedCompleted(treasure.quest)
 end
 PKT.IsLooted = IsLooted
+
+local function CountRemaining(list)
+    local n = 0
+    for _, t in ipairs(list) do
+        if not IsLooted(t) then n = n + 1 end
+    end
+    return n
+end
+PKT.CountRemaining = CountRemaining
 
 local function TwoOpt(route)
     local n = #route
@@ -75,35 +111,42 @@ local function TwoOpt(route)
 end
 
 local function NearestNeighborSort(treasures, startX, startY)
-    local unlooted, looted = {}, {}
-    for _, t in ipairs(treasures) do
-        if IsLooted(t) then table.insert(looted, t)
-        else table.insert(unlooted, t) end
+    local visited = {}
+    local looted = {}
+    local unvisited = 0
+    for i, t in ipairs(treasures) do
+        if IsLooted(t) then
+            looted[#looted + 1] = t
+        else
+            unvisited = unvisited + 1
+        end
     end
     local sorted = {}
     local cx, cy = startX, startY
-    local exitX, exitY = startX, startY
-    while #unlooted > 0 do
-        local bestIdx, bestDist = 1, math.huge
-        for i, t in ipairs(unlooted) do
-            local d = DistSq(cx, cy, t.x, t.y)
-            if d < bestDist then bestDist = d; bestIdx = i end
+    while unvisited > 0 do
+        local bestIdx, bestDist = nil, huge
+        for i, t in ipairs(treasures) do
+            if not visited[i] and not IsLooted(t) then
+                local d = DistSq(cx, cy, t.x, t.y)
+                if d < bestDist then bestDist = d; bestIdx = i end
+            end
         end
-        local best = table.remove(unlooted, bestIdx)
-        table.insert(sorted, best)
+        if not bestIdx then break end
+        visited[bestIdx] = true
+        unvisited = unvisited - 1
+        local best = treasures[bestIdx]
+        sorted[#sorted + 1] = best
         cx, cy = best.x, best.y
     end
     TwoOpt(sorted)
-    if #sorted > 0 then exitX, exitY = sorted[#sorted].x, sorted[#sorted].y end
-    for _, t in ipairs(looted) do table.insert(sorted, t) end
-    return sorted, exitX, exitY
+    for _, t in ipairs(looted) do sorted[#sorted + 1] = t end
+    return sorted
 end
 
 local function BuildRoute()
     routeList = {}
     activeProfIDs = {}
     local playerMapID, playerX, playerY = GetPlayerZoneAndPos()
-    -- Resolve sub-zones to whichever group member appears in ZONE_ORDER
     local playerZoneID = playerMapID
     if playerMapID then
         local group = GetZoneGroup(playerMapID)
@@ -121,7 +164,7 @@ local function BuildRoute()
             if treasures then
                 for _, t in ipairs(treasures) do
                     if not byZone[t.mapID] then byZone[t.mapID] = {} end
-                    table.insert(byZone[t.mapID], t)
+                    byZone[t.mapID][#byZone[t.mapID] + 1] = t
                 end
             end
         end
@@ -132,30 +175,28 @@ local function BuildRoute()
     end
     local zoneOrder = {}
     if playerZoneID and byZone[playerZoneID] then
-        table.insert(zoneOrder, playerZoneID)
+        zoneOrder[#zoneOrder + 1] = playerZoneID
     end
     if currentOrderIdx > 0 then
         for i = currentOrderIdx + 1, #PKT.ZONE_ORDER do
             local mapID = PKT.ZONE_ORDER[i]
-            if mapID ~= playerZoneID and byZone[mapID] then table.insert(zoneOrder, mapID) end
+            if mapID ~= playerZoneID and byZone[mapID] then zoneOrder[#zoneOrder + 1] = mapID end
         end
         for i = 1, currentOrderIdx - 1 do
             local mapID = PKT.ZONE_ORDER[i]
-            if mapID ~= playerZoneID and byZone[mapID] then table.insert(zoneOrder, mapID) end
+            if mapID ~= playerZoneID and byZone[mapID] then zoneOrder[#zoneOrder + 1] = mapID end
         end
     else
         for _, mapID in ipairs(PKT.ZONE_ORDER) do
-            if mapID ~= playerZoneID and byZone[mapID] then table.insert(zoneOrder, mapID) end
+            if mapID ~= playerZoneID and byZone[mapID] then zoneOrder[#zoneOrder + 1] = mapID end
         end
     end
-    local exitX, exitY = playerX, playerY
     for i, mapID in ipairs(zoneOrder) do
         if byZone[mapID] then
-            local startX = (i == 1) and playerX or exitX
-            local startY = (i == 1) and playerY or exitY
-            local sorted, zExitX, zExitY = NearestNeighborSort(byZone[mapID], startX, startY)
-            exitX, exitY = zExitX, zExitY
-            for _, t in ipairs(sorted) do table.insert(routeList, t) end
+            local startX = (i == 1) and playerX or 0
+            local startY = (i == 1) and playerY or 0
+            local sorted = NearestNeighborSort(byZone[mapID], startX, startY)
+            for _, t in ipairs(sorted) do routeList[#routeList + 1] = t end
         end
     end
 end
@@ -178,6 +219,9 @@ local function SetNativeWaypoint(mapID, x, y)
         C_Map.SetUserWaypoint(UiMapPoint.CreateFromVector2D(mapID, CreateVector2D(x, y)))
         if C_SuperTrack then C_SuperTrack.SetSuperTrackedUserWaypoint(true) end
     end)
+    if ok then
+        currentNativeMapID, currentNativeX, currentNativeY = mapID, x, y
+    end
     return ok
 end
 
@@ -189,44 +233,39 @@ local function ClearCurrentWaypoint()
     end
 end
 
+local function AddTomTomWaypoint(mapID, x, y, title)
+    if not TomTom then return end
+    currentWaypointUID = TomTom:AddWaypoint(mapID, x, y, {
+        title = title,
+        from = "ProfessionKnowledgeTreasures",
+        persistent = false, minimap = true, world = true, crazy = true,
+    })
+end
+
 local function SetWaypointAt(index)
     ClearCurrentWaypoint()
     local t = routeList[index]
     if not t then return end
     currentIndex = index
     local playerMapID = C_Map.GetBestMapForUnit("player")
-    local sameGroup = false
-    if playerMapID ~= t.mapID then
-        local group = GetZoneGroup(playerMapID)
-        for _, id in ipairs(group) do
-            if id == t.mapID then sameGroup = true; break end
-        end
-    end
-    local portal = (playerMapID ~= t.mapID) and not sameGroup and PKT.GetPortalSuggestion(playerMapID, t.mapID)
+    local playerGroupSet = GetZoneGroupSet(playerMapID)
+    local portal = not playerGroupSet[t.mapID] and PKT.GetPortalSuggestion(playerMapID, t.mapID)
     if portal then
-        SetNativeWaypoint(portal.mapID, portal.x, portal.y)
-        if TomTom then
-            currentWaypointUID = TomTom:AddWaypoint(portal.mapID, portal.x, portal.y, {
-                title = string.format("[PKT] %s", portal.name),
-                from = "ProfessionKnowledgeTracker",
-                persistent = false, minimap = true, world = true, crazy = true,
-            })
+        local nativeOk = SetNativeWaypoint(portal.mapID, portal.x, portal.y)
+        AddTomTomWaypoint(portal.mapID, portal.x, portal.y, format("[PKT] %s", portal.name))
+        print(format(PKT_TAG .. " Take " .. C_ORANGE .. "%s" .. C_END .. " (%.1f, %.1f) \226\134\146 " .. C_YELLOW .. "%s" .. C_END .. " in " .. C_GRAY .. "%s" .. C_END,
+            portal.name, portal.x * 100, portal.y * 100, t.name, PKT.ZONE_NAMES[t.mapID] or "?"))
+        if not nativeOk and not TomTom then
+            print(format(PKT_TAG .. " " .. C_RED .. "Waypoint unavailable" .. C_END .. " \226\128\148 portal is at " .. C_YELLOW .. "%.1f, %.1f" .. C_END .. " on the %s map",
+                portal.x * 100, portal.y * 100, PKT.ZONE_NAMES[portal.mapID] or "?"))
         end
-        print(string.format("|cff00ccff[PKT]|r Take |cffff9900%s|r → |cffffff00%s|r in |cffaaaaaa%s|r (%.1f, %.1f)",
-            portal.name, t.name, PKT.ZONE_NAMES[t.mapID] or "?", t.x * 100, t.y * 100))
     else
         SetNativeWaypoint(t.mapID, t.x, t.y)
-        if TomTom then
-            currentWaypointUID = TomTom:AddWaypoint(t.mapID, t.x, t.y, {
-                title = string.format("[PKT] %s", t.name),
-                from = "ProfessionKnowledgeTracker",
-                persistent = false, minimap = true, world = true, crazy = true,
-            })
-        end
+        AddTomTomWaypoint(t.mapID, t.x, t.y, format("[PKT] %s", t.name))
         local zoneName = PKT.ZONE_NAMES[t.mapID] or "Unknown"
-        print(string.format("|cff00ccff[PKT]|r Next: |cffffff00%s|r in |cffaaaaaa%s|r (%.1f, %.1f)%s",
+        print(format(PKT_TAG .. " Next: " .. C_YELLOW .. "%s" .. C_END .. " in " .. C_GRAY .. "%s" .. C_END .. " (%.1f, %.1f)%s",
             t.name, zoneName, t.x * 100, t.y * 100,
-            t.notes and ("|cffff9900  [" .. t.notes .. "]|r") or ""))
+            t.notes and (C_ORANGE .. "  [" .. t.notes .. "]" .. C_END) or ""))
     end
     PKT.UpdateUI()
 end
@@ -251,7 +290,7 @@ local function CheckAutoAdvance()
             ClearCurrentWaypoint()
             currentIndex = 0
             PKT.UpdateUI()
-            print("|cff00ff00[PKT]|r All profession knowledge treasures collected! Grats!")
+            print(PKT_TAG_OK .. " All profession knowledge treasures collected! Grats!")
         end
     end
 end
@@ -259,10 +298,8 @@ end
 JumpToNearestInZone = function()
     local playerMapID, playerX, playerY = GetPlayerZoneAndPos()
     if not playerMapID or #routeList == 0 then return false end
-    local group = GetZoneGroup(playerMapID)
-    local groupSet = {}
-    for _, id in ipairs(group) do groupSet[id] = true end
-    local bestIdx, bestDist = nil, math.huge
+    local groupSet = GetZoneGroupSet(playerMapID)
+    local bestIdx, bestDist = nil, huge
     for i, t in ipairs(routeList) do
         if groupSet[t.mapID] and not IsLooted(t) then
             local d = DistSq(playerX, playerY, t.x, t.y)
@@ -290,69 +327,58 @@ local function IsFlyable(fromMapID, toMapID)
     return false
 end
 
-function PKT.GetPortalSuggestion(fromMapID, toMapID)
-    if not fromMapID or not toMapID then return nil end
-    local fromGroup = GetZoneGroup(fromMapID)
-    local toGroup = GetZoneGroup(toMapID)
-    local fromSet, toSet = {}, {}
-    for _, id in ipairs(fromGroup) do fromSet[id] = true end
-    for _, id in ipairs(toGroup) do toSet[id] = true end
-    if toSet[fromMapID] then return nil end
-    if IsFlyable(fromMapID, toMapID) then return nil end
+local function FindDirectPortal(fromSet, toSet)
     for _, portal in ipairs(PKT.PORTALS) do
         if fromSet[portal.mapID] and toSet[portal.dest] and IsPortalUnlocked(portal) then
             return portal
         end
     end
-    local hubMapID = nil
-    if PKT.ZONE_TRANSIT then
-        for _, id in ipairs(fromGroup) do
-            if PKT.ZONE_TRANSIT[id] then
-                hubMapID = PKT.ZONE_TRANSIT[id]
-                break
-            end
-        end
+end
+
+local function FindHubPortal(fromGroup, fromSet, toSet, toMapID, px, py)
+    if not PKT.ZONE_TRANSIT then return nil end
+    local hubMapID
+    for _, id in ipairs(fromGroup) do
+        if PKT.ZONE_TRANSIT[id] then hubMapID = PKT.ZONE_TRANSIT[id]; break end
     end
-    local _, px, py = GetPlayerZoneAndPos()
-    if hubMapID then
-        local hubGroup = GetZoneGroup(hubMapID)
-        local hubSet = {}
-        for _, id in ipairs(hubGroup) do hubSet[id] = true end
-        local hubCanReach = false
-        for _, portal in ipairs(PKT.PORTALS) do
-            if hubSet[portal.mapID] and toSet[portal.dest] and IsPortalUnlocked(portal) then
-                hubCanReach = true; break
-            end
-        end
-        if not hubCanReach then
-            for _, id in ipairs(hubGroup) do
-                if IsFlyable(id, toMapID) then hubCanReach = true; break end
-            end
-        end
-        if hubCanReach then
-            local best, bestDist = nil, math.huge
-            for _, portal in ipairs(PKT.PORTALS) do
-                if fromSet[portal.mapID] and hubSet[portal.dest] and IsPortalUnlocked(portal) then
-                    local d = DistSq(px, py, portal.x, portal.y)
-                    if d < bestDist then bestDist = d; best = portal end
-                end
-            end
-            if best then return best end
-        end
-        for _, portal in ipairs(PKT.PORTALS) do
-            if hubSet[portal.mapID] and toSet[portal.dest] and IsPortalUnlocked(portal) then
-                return portal
-            end
-        end
-    end
-    local best, bestDist = nil, math.huge
+    if not hubMapID then return nil end
+    local hubGroup = GetZoneGroup(hubMapID)
+    local hubSet = GetZoneGroupSet(hubMapID)
+    local hubCanReach = false
     for _, portal in ipairs(PKT.PORTALS) do
-        if fromSet[portal.mapID] and IsPortalUnlocked(portal) then
-            local d = DistSq(px, py, portal.x, portal.y)
-            if d < bestDist then bestDist = d; best = portal end
+        if hubSet[portal.mapID] and toSet[portal.dest] and IsPortalUnlocked(portal) then
+            hubCanReach = true; break
         end
     end
-    return best
+    if not hubCanReach then
+        for _, id in ipairs(hubGroup) do
+            if IsFlyable(id, toMapID) then hubCanReach = true; break end
+        end
+    end
+    if hubCanReach then
+        local best, bestDist = nil, huge
+        for _, portal in ipairs(PKT.PORTALS) do
+            if fromSet[portal.mapID] and hubSet[portal.dest] and IsPortalUnlocked(portal) then
+                local d = DistSq(px, py, portal.x, portal.y)
+                if d < bestDist then bestDist = d; best = portal end
+            end
+        end
+        if best then return best end
+    end
+    return FindDirectPortal(hubSet, toSet)
+end
+
+function PKT.GetPortalSuggestion(fromMapID, toMapID)
+    if not fromMapID or not toMapID then return nil end
+    local fromGroup = GetZoneGroup(fromMapID)
+    local fromSet = GetZoneGroupSet(fromMapID)
+    local toSet = GetZoneGroupSet(toMapID)
+    if toSet[fromMapID] then return nil end
+    if IsFlyable(fromMapID, toMapID) then return nil end
+    local direct = FindDirectPortal(fromSet, toSet)
+    if direct then return direct end
+    local _, px, py = GetPlayerZoneAndPos()
+    return FindHubPortal(fromGroup, fromSet, toSet, toMapID, px, py)
 end
 
 function PKT.GetCurrent()
@@ -373,7 +399,7 @@ function PKT.GetProfBreakdown()
                 if not IsLooted(t) then remaining = remaining + 1 end
             end
         end
-        table.insert(result, { name = PKT.PROF_NAMES[profID], remaining = remaining, total = total })
+        result[#result + 1] = { name = PKT.PROF_NAMES[profID], remaining = remaining, total = total }
     end
     table.sort(result, function(a, b) return a.name < b.name end)
     return result
@@ -382,19 +408,19 @@ end
 function PKT.GoNext()
     local idx = FindNextIncomplete(currentIndex + 1)
     if idx then SetWaypointAt(idx)
-    else print("|cff00ccff[PKT]|r No more incomplete treasures ahead.") end
+    else print(PKT_TAG .. " No more incomplete treasures ahead.") end
 end
 
 function PKT.GoPrev()
     local idx = FindPrevIncomplete(currentIndex - 1)
     if idx then SetWaypointAt(idx)
-    else print("|cff00ccff[PKT]|r No more incomplete treasures before this one.") end
+    else print(PKT_TAG .. " No more incomplete treasures before this one.") end
 end
 
 function PKT.GoFirst()
     local idx = FindNextIncomplete(1)
     if idx then SetWaypointAt(idx)
-    else print("|cff00ff00[PKT]|r All done!") end
+    else print(PKT_TAG_OK .. " All done!") end
 end
 
 function PKT.GoNearest()
@@ -408,29 +434,33 @@ function PKT.GetActiveDMFProfs()
         if HasProfession(profID) and PKT.DMF_QUESTS[profID] then
             local q = PKT.DMF_QUESTS[profID]
             local done = C_QuestLog.IsQuestFlaggedCompleted(q.questID)
-            table.insert(result, { profID = profID, name = PKT.PROF_NAMES[profID], quest = q, done = done })
+            result[#result + 1] = { profID = profID, name = PKT.PROF_NAMES[profID], quest = q, done = done }
         end
     end
     table.sort(result, function(a, b) return a.name < b.name end)
     return result
 end
 
-function PKT.Reload()
+local function StartRoute()
     BuildRoute()
-    local remaining = 0
-    for _, t in ipairs(routeList) do
-        if not IsLooted(t) then remaining = remaining + 1 end
+    local remaining = CountRemaining(routeList)
+    if remaining > 0 then
+        if not JumpToNearestInZone() then
+            local idx = FindNextIncomplete(1)
+            if idx then SetWaypointAt(idx) end
+        end
     end
+    return remaining
+end
+
+function PKT.Reload()
+    local remaining = StartRoute()
     if remaining == 0 then
         PKT.UpdateUI()
-        print("|cff00ff00[PKT]|r All profession knowledge treasures already collected!")
+        print(PKT_TAG_OK .. " All profession knowledge treasures already collected!")
         return
     end
-    if not JumpToNearestInZone() then
-        local idx = FindNextIncomplete(1)
-        if idx then SetWaypointAt(idx) end
-    end
-    print(string.format("|cff00ccff[PKT]|r Route built: |cffffff00%d|r remaining of |cffaaaaaa%d|r total.",
+    print(format(PKT_TAG .. " Route built: " .. C_YELLOW .. "%d" .. C_END .. " remaining of " .. C_GRAY .. "%d" .. C_END .. " total.",
         remaining, #routeList))
 end
 
@@ -444,22 +474,53 @@ SlashCmdList["PKT"] = function(msg)
     elseif cmd == "nearest" then PKT.GoNearest()
     elseif cmd == "reload"  then PKT.Reload()
     elseif cmd == "dmf"     then PKT.ToggleDMFUI()
+    elseif cmd == "test"    then
+        PKT.testMode = not PKT.testMode
+        PKT.testProfs = {}
+        if PKT.testMode then
+            for profID in pairs(PKT.PROF_NAMES) do PKT.testProfs[profID] = true end
+            print(PKT_TAG .. " " .. C_RED .. "Test mode ON" .. C_END .. " \226\128\148 choose professions in the picker.")
+            if PKT.ShowTestProfUI then PKT.ShowTestProfUI() end
+        else
+            if PKT.HideTestProfUI then PKT.HideTestProfUI() end
+            print(PKT_TAG .. " Test mode off.")
+        end
+        PKT.Reload()
+        PKT.UpdateUI()
+    elseif cmd == "debug"   then
+        print(PKT_TAG .. " Profession detection debug:")
+        local slots = { GetProfessions() }
+        for _, idx in ipairs(slots) do
+            if idx then
+                local name, _, skillLevel, _, _, _, lineID = GetProfessionInfo(idx)
+                if name then
+                    print(format("  slotIdx %d: %s (lineID=%d, skill=%d) \226\128\148 PKT match: %s",
+                        idx, name, lineID or 0, skillLevel or 0,
+                        PKT.PROF_NAMES[lineID] and (C_GREEN .. "YES" .. C_END) or (C_RED .. "no" .. C_END)))
+                end
+            end
+        end
+        for profID, profName in pairs(PKT.PROF_NAMES) do
+            local info = C_TradeSkillUI and C_TradeSkillUI.GetProfessionInfoBySkillLineID(profID)
+            if info then
+                print(format("  C_TradeSkillUI found %s (ID=%d, skill=%d)", profName, profID, info.skillLevel or -1))
+            end
+        end
     elseif cmd == "mapid"   then
         local mapID = C_Map.GetBestMapForUnit("player")
         local mapInfo = mapID and C_Map.GetMapInfo(mapID)
-        local subName = mapInfo and mapInfo.name or "?"
-        print(string.format("|cff00ccff[PKT]|r Current mapID: |cffffff00%d|r (%s)", mapID or 0, subName))
+        print(format(PKT_TAG .. " Current mapID: " .. C_YELLOW .. "%d" .. C_END .. " (%s)", mapID or 0, mapInfo and mapInfo.name or "?"))
     elseif cmd == "list"    then
         local count = 0
         for i, t in ipairs(routeList) do
             if not IsLooted(t) then
                 count = count + 1
                 local zoneName = PKT.ZONE_NAMES[t.mapID] or "?"
-                print(string.format("|cff00ccff[PKT]|r %d. |cffffff00%s|r - %s (%.1f, %.1f)",
+                print(format(PKT_TAG .. " %d. " .. C_YELLOW .. "%s" .. C_END .. " - %s (%.1f, %.1f)",
                     i, t.name, zoneName, t.x * 100, t.y * 100))
             end
         end
-        if count == 0 then print("|cff00ff00[PKT]|r All done!") end
+        if count == 0 then print(PKT_TAG_OK .. " All done!") end
     else
         PKT.ToggleUI()
     end
@@ -478,7 +539,7 @@ local function CheckDMFZone()
         if not PKT.IsDMFShown() then
             dmfAutoOpened = true
             PKT.ShowDMFUI()
-            print("|cff00ccff[PKT]|r |cffFFDD44Darkmoon Faire|r detected — showing knowledge quests.")
+            print(PKT_TAG .. " " .. C_GOLD .. "Darkmoon Faire" .. C_END .. " detected \226\128\148 showing knowledge quests.")
         end
     else
         if dmfAutoOpened and PKT.IsDMFShown() then PKT.HideDMFUI() end
@@ -492,46 +553,37 @@ eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 eventFrame:RegisterEvent("QUEST_LOG_UPDATE")
 eventFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")
 eventFrame:RegisterEvent("LOOT_CLOSED")
+eventFrame:RegisterEvent("SUPER_TRACKING_CHANGED")
 
 eventFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" then
+        PKT.InitUI()
         C_Timer.After(3, function()
-            BuildRoute()
-            local remaining = 0
-            for _, t in ipairs(routeList) do
-                if not IsLooted(t) then remaining = remaining + 1 end
-            end
+            local remaining = StartRoute()
             if remaining > 0 then
-                print(string.format("|cff00ccff[PKT]|r %d profession knowledge treasure(s) remaining.",
-                    remaining))
+                print(format(PKT_TAG .. " %d profession knowledge treasure(s) remaining.", remaining))
                 PKT.ShowUI()
             end
             PKT.UpdateUI()
             CheckDMFZone()
-            C_Timer.NewTicker(3, function()
-                CheckAutoAdvance()
-            end)
+            C_Timer.NewTicker(3, CheckAutoAdvance)
         end)
     elseif event == "ZONE_CHANGED_NEW_AREA" then
         C_Timer.After(1.5, function()
             CheckDMFZone()
             if currentIndex > 0 and #routeList > 0 then
                 local playerMapID = C_Map.GetBestMapForUnit("player")
-                local group = GetZoneGroup(playerMapID)
-                local groupSet = {}
-                for _, id in ipairs(group) do groupSet[id] = true end
+                local groupSet = GetZoneGroupSet(playerMapID)
                 local hasHere = false
                 for _, t in ipairs(routeList) do
                     if groupSet[t.mapID] and not IsLooted(t) then hasHere = true; break end
                 end
                 if hasHere then
                     local currentTarget = routeList[currentIndex]
-                    local targetGroup = currentTarget and GetZoneGroup(currentTarget.mapID)
-                    local targetSet = {}
-                    if targetGroup then for _, id in ipairs(targetGroup) do targetSet[id] = true end end
+                    local targetSet = currentTarget and GetZoneGroupSet(currentTarget.mapID) or {}
                     if not currentTarget or targetSet[playerMapID] then
                         local zoneName = PKT.ZONE_NAMES[playerMapID] or "this zone"
-                        print(string.format("|cff00ccff[PKT]|r Entered %s — jumping to nearest treasure.", zoneName))
+                        print(format(PKT_TAG .. " Entered %s \226\128\148 jumping to nearest treasure.", zoneName))
                         JumpToNearestInZone()
                     else
                         PKT.UpdateUI()
@@ -552,5 +604,16 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
             autoAdvancePending = false
             CheckAutoAdvance()
         end)
+    elseif event == "SUPER_TRACKING_CHANGED" then
+        if currentIndex > 0 and currentNativeMapID then
+            C_Timer.After(0.2, function()
+                if currentIndex > 0 and currentNativeMapID then
+                    local current = routeList[currentIndex]
+                    if current and not IsLooted(current) then
+                        SetNativeWaypoint(currentNativeMapID, currentNativeX, currentNativeY)
+                    end
+                end
+            end)
+        end
     end
 end)

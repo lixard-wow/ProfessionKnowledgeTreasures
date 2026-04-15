@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0
+## 1.1
 
 ### Bug Fixes
 - Fixed Herbalism not being detected as an active profession
@@ -19,7 +19,7 @@
 
 ---
 
-## 1.0.0
+## 1.0
 
 - Initial release
 - Tracks Midnight profession knowledge treasures for all 11 professions

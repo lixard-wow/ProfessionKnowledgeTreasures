@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.0
+
+### Bug Fixes
+- Fixed direction arrow remaining active after closing the addon window — closing now clears all waypoints
+
+### Improvements
+- Added Settings panel (gear icon beside the X button, or `/pkt settings`) to configure the waypoint system
+- Waypoint system options: Native + TomTom (default), Native Only, TomTom Only, or None (map pin only)
+- Minimap button now supports middle-click to open Settings
+- TomTom users can now select "Native Only" or "None" to prevent PKT from interfering with TomTom's quest tracking arrow
+
+---
+
 ## 1.1
 
 ### Bug Fixes

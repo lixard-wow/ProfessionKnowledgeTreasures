@@ -213,7 +213,14 @@ local function FindPrevIncomplete(startIdx)
     end
 end
 
+local function GetWaypointSystem()
+    return PKT_SavedVars and PKT_SavedVars.waypointSystem or "both"
+end
+PKT.GetWaypointSystem = GetWaypointSystem
+
 local function SetNativeWaypoint(mapID, x, y)
+    local sys = GetWaypointSystem()
+    if sys == "tomtom" or sys == "none" then return false end
     if not C_Map.SetUserWaypoint or not UiMapPoint then return false end
     local ok = pcall(function()
         C_Map.SetUserWaypoint(UiMapPoint.CreateFromVector2D(mapID, CreateVector2D(x, y)))
@@ -235,6 +242,8 @@ end
 
 local function AddTomTomWaypoint(mapID, x, y, title)
     if not TomTom then return end
+    local sys = GetWaypointSystem()
+    if sys == "native" or sys == "none" then return end
     currentWaypointUID = TomTom:AddWaypoint(mapID, x, y, {
         title = title,
         from = "ProfessionKnowledgeTreasures",
@@ -423,6 +432,35 @@ function PKT.GoFirst()
     else print(PKT_TAG_OK .. " All done!") end
 end
 
+function PKT.StopTracking()
+    ClearCurrentWaypoint()
+    currentIndex = 0
+    currentNativeMapID = nil
+    PKT.UpdateUI()
+end
+
+function PKT.OnWaypointSystemChanged(newSystem)
+    -- Drop the TomTom waypoint immediately if switching away from TomTom
+    if newSystem == "native" or newSystem == "none" then
+        if currentWaypointUID and TomTom then
+            TomTom:RemoveWaypoint(currentWaypointUID)
+            currentWaypointUID = nil
+        end
+    end
+    -- Drop the native waypoint immediately if switching away from native
+    if newSystem == "tomtom" or newSystem == "none" then
+        if C_Map.ClearUserWaypoint then C_Map.ClearUserWaypoint() end
+        currentNativeMapID = nil
+    end
+    -- Re-apply the current waypoint under the new system
+    if currentIndex > 0 and newSystem ~= "none" then
+        local t = routeList[currentIndex]
+        if t and not IsLooted(t) then
+            SetWaypointAt(currentIndex)
+        end
+    end
+end
+
 function PKT.GoNearest()
     if not JumpToNearestInZone() then PKT.GoFirst() end
 end
@@ -506,6 +544,8 @@ SlashCmdList["PKT"] = function(msg)
                 print(format("  C_TradeSkillUI found %s (ID=%d, skill=%d)", profName, profID, info.skillLevel or -1))
             end
         end
+    elseif cmd == "settings" then
+        PKT.ToggleSettingsUI()
     elseif cmd == "mapid"   then
         local mapID = C_Map.GetBestMapForUnit("player")
         local mapInfo = mapID and C_Map.GetMapInfo(mapID)

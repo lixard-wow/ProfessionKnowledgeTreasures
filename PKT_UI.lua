@@ -143,8 +143,15 @@ local function CreateTrackerFrame()
     local reloadBtn = MakeButton(f, "Reload", btnW, function() PKT.Reload() end)
     reloadBtn:SetPoint("LEFT", nextBtn, "RIGHT", btnGap, 0)
 
-    local closeBtn = MakeButton(f, "X", 22, function() f:Hide() end)
+    local closeBtn = MakeButton(f, "X", 22, function() PKT.StopTracking(); f:Hide() end)
     closeBtn:SetPoint("TOPRIGHT", 0, 0)
+
+    local settingsBtn = CreateFrame("Button", nil, f)
+    settingsBtn:SetSize(16, 16)
+    settingsBtn:SetPoint("RIGHT", closeBtn, "LEFT", -4, 0)
+    settingsBtn:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+    settingsBtn:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    settingsBtn:SetScript("OnClick", function() PKT.ToggleSettingsUI() end)
 
     f:Hide()
     return f
@@ -383,6 +390,76 @@ function PKT.ToggleDMFUI()
     else PKT.ShowDMFUI() end
 end
 
+local settingsFrame
+
+local WAYPOINT_OPTIONS = {
+    { key = "both",   label = "Native + TomTom",    desc = "Sets game waypoint arrow and TomTom arrow" },
+    { key = "native", label = "Native Only",         desc = "Uses the game's built-in waypoint arrow"   },
+    { key = "tomtom", label = "TomTom Only",         desc = "Uses TomTom's crazy arrow (requires TomTom)"},
+    { key = "none",   label = "None (map pin only)", desc = "Places a map marker, no direction arrow"   },
+}
+
+local function CreateSettingsFrame()
+    local f = CreatePKTFrame("PKTSettingsFrame", 270, 200, "HIGH")
+    f:SetPoint("LEFT", trackerFrame, "RIGHT", 6, 0)
+
+    local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOP", 0, -8)
+    title:SetText(C_GOLD .. "PKT Settings" .. C_END)
+
+    local closeBtn = MakeButton(f, "X", 22, function() f:Hide() end)
+    closeBtn:SetPoint("TOPRIGHT", 0, 0)
+
+    AddSeparator(f, "TOP", -26, 0.5)
+
+    local sysLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    sysLabel:SetPoint("TOPLEFT", 10, -34)
+    sysLabel:SetText("Waypoint System:")
+    sysLabel:SetTextColor(0.9, 0.75, 0.4)
+    SetFontSize(sysLabel, 12)
+
+    f.radioButtons = {}
+    for i, opt in ipairs(WAYPOINT_OPTIONS) do
+        local rb = CreateFrame("CheckButton", "PKTRadio_" .. opt.key, f, "UIRadioButtonTemplate")
+        rb:SetPoint("TOPLEFT", 16, -56 - (i - 1) * 26)
+        rb:SetScript("OnClick", function()
+            PKT_SavedVars.waypointSystem = opt.key
+            for _, btn in ipairs(f.radioButtons) do
+                btn:SetChecked(btn._key == opt.key)
+            end
+            PKT.OnWaypointSystemChanged(opt.key)
+        end)
+        rb._key = opt.key
+
+        local lbl = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        lbl:SetPoint("LEFT", rb, "RIGHT", 4, 0)
+        lbl:SetText(opt.label)
+        SetFontSize(lbl, 12)
+
+        f.radioButtons[i] = rb
+    end
+
+    f.Refresh = function()
+        local current = PKT.GetWaypointSystem()
+        for _, btn in ipairs(f.radioButtons) do
+            btn:SetChecked(btn._key == current)
+        end
+    end
+
+    f:SetScript("OnShow", f.Refresh)
+    f:Hide()
+    return f
+end
+
+function PKT.ToggleSettingsUI()
+    if not settingsFrame then settingsFrame = CreateSettingsFrame() end
+    if settingsFrame:IsShown() then
+        settingsFrame:Hide()
+    else
+        settingsFrame:Show()
+    end
+end
+
 local ldb = LibStub("LibDataBroker-1.1"):NewDataObject("ProfessionKnowledgeTreasures", {
     type = "launcher",
     text = "PKT",
@@ -392,12 +469,15 @@ local ldb = LibStub("LibDataBroker-1.1"):NewDataObject("ProfessionKnowledgeTreas
             PKT.ToggleUI()
         elseif button == "RightButton" then
             PKT.ToggleDMFUI()
+        elseif button == "MiddleButton" then
+            PKT.ToggleSettingsUI()
         end
     end,
     OnTooltipShow = function(tooltip)
         tooltip:AddLine("Profession Knowledge Treasures", 1, 0.82, 0)
         tooltip:AddLine("Left-click: toggle tracker", 1, 1, 1)
         tooltip:AddLine("Right-click: Darkmoon Faire quests", 1, 1, 1)
+        tooltip:AddLine("Middle-click: settings", 1, 1, 1)
     end,
 })
 
@@ -499,6 +579,7 @@ end
 function PKT.InitUI()
     PKT_SavedVars = PKT_SavedVars or {}
     PKT_SavedVars.minimap = PKT_SavedVars.minimap or { hide = false, minimapPos = 225 }
+    if PKT_SavedVars.waypointSystem == nil then PKT_SavedVars.waypointSystem = "both" end
     trackerFrame = CreateTrackerFrame()
     local icon = LibStub("LibDBIcon-1.0")
     icon:Register("ProfessionKnowledgeTreasures", ldb, PKT_SavedVars.minimap)

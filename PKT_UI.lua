@@ -243,6 +243,11 @@ function PKT.ShowUI()
     PKT.UpdateUI()
 end
 
+function PKT.HideUI()
+    if not trackerFrame then return end
+    trackerFrame:Hide()
+end
+
 function PKT.ToggleUI()
     if not trackerFrame then return end
     if trackerFrame:IsShown() then

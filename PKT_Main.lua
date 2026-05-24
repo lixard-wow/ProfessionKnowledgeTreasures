@@ -20,12 +20,17 @@ local currentIndex = 0
 local currentNativeMapID, currentNativeX, currentNativeY
 local routeList = {}
 local activeProfIDs = {}
+local loginReady = false
+local loginTimerFired = false
+local loginQuestUpdated = false
+local loginStarted = false
+local autoShown = false
 local JumpToNearestInZone
 
 local function HasProfession(skillLineID)
     if PKT.testMode then return PKT.testProfs[skillLineID] == true end
     local info = C_TradeSkillUI and C_TradeSkillUI.GetProfessionInfoBySkillLineID(skillLineID)
-    if info and info.skillLevel and info.skillLevel > 0 then return true end
+    if info and info.skillLevel ~= nil then return true end
     local profName = PKT.PROF_NAMES[skillLineID]
     local slots = { GetProfessions() }
     for _, idx in ipairs(slots) do
@@ -300,6 +305,8 @@ local function CheckAutoAdvance()
             currentIndex = 0
             PKT.UpdateUI()
             print(PKT_TAG_OK .. " All profession knowledge treasures collected! Grats!")
+            if autoShown and PKT.HideUI then PKT.HideUI() end
+            autoShown = false
         end
     end
 end
@@ -587,8 +594,24 @@ local function CheckDMFZone()
     end
 end
 
+local function DoLoginStart()
+    if loginStarted then return end
+    loginStarted = true
+    loginReady = true
+    local remaining = StartRoute()
+    if remaining > 0 then
+        autoShown = true
+        print(format(PKT_TAG .. " %d profession knowledge treasure(s) remaining.", remaining))
+        PKT.ShowUI()
+    end
+    PKT.UpdateUI()
+    CheckDMFZone()
+    C_Timer.NewTicker(3, CheckAutoAdvance)
+end
+
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
+eventFrame:RegisterEvent("SKILL_LINES_CHANGED")
 eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 eventFrame:RegisterEvent("QUEST_LOG_UPDATE")
 eventFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")
@@ -599,18 +622,14 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" then
         PKT.InitUI()
         C_Timer.After(3, function()
-            local remaining = StartRoute()
-            if remaining > 0 then
-                print(format(PKT_TAG .. " %d profession knowledge treasure(s) remaining.", remaining))
-                PKT.ShowUI()
-            end
-            PKT.UpdateUI()
-            CheckDMFZone()
-            C_Timer.NewTicker(3, CheckAutoAdvance)
+            loginTimerFired = true
+            if loginQuestUpdated then DoLoginStart() end
         end)
     elseif event == "ZONE_CHANGED_NEW_AREA" then
         C_Timer.After(1.5, function()
+            local inInstance = IsInInstance()
             CheckDMFZone()
+            if inInstance then return end
             if currentIndex > 0 and #routeList > 0 then
                 local playerMapID = C_Map.GetBestMapForUnit("player")
                 local groupSet = GetZoneGroupSet(playerMapID)
@@ -634,10 +653,26 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
                 end
             end
         end)
+    elseif event == "SKILL_LINES_CHANGED" then
+        if loginReady and not IsInInstance() and next(activeProfIDs) == nil then
+            ClearCurrentWaypoint()
+            currentIndex = 0
+            local remaining = StartRoute()
+            if remaining > 0 then
+                print(format(PKT_TAG .. " %d profession knowledge treasure(s) remaining.", remaining))
+                PKT.ShowUI()
+            end
+            PKT.UpdateUI()
+        end
     elseif event == "UNIT_QUEST_LOG_CHANGED" then
         if unit == "player" then CheckAutoAdvance() end
     elseif event == "QUEST_LOG_UPDATE" then
-        CheckAutoAdvance()
+        if not loginStarted then
+            loginQuestUpdated = true
+            if loginTimerFired then DoLoginStart() end
+        else
+            CheckAutoAdvance()
+        end
     elseif event == "LOOT_CLOSED" then
         autoAdvancePending = true
         C_Timer.After(0.8, function()

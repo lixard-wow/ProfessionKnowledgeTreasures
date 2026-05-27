@@ -1,22 +1,18 @@
 PKT = PKT or {}
-
 local format  = string.format
 local tconcat = table.concat
-
 local C_YELLOW = "|cffffff00"
 local C_GRAY   = "|cffaaaaaa"
 local C_ORANGE = "|cffff9900"
 local C_RED    = "|cffff4444"
 local C_GOLD   = "|cffFFDD44"
+local C_SOFTWHITE = "|cffe6e6e6"
 local C_END    = "|r"
-
 local trackerFrame
-
 local function SetFontSize(fs, size)
     local face, _, flags = fs:GetFont()
     fs:SetFont(face, size, flags)
 end
-
 local function MakeButton(parent, label, width, onClick)
     local btn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     btn:SetSize(width, 24)
@@ -24,7 +20,6 @@ local function MakeButton(parent, label, width, onClick)
     btn:SetScript("OnClick", onClick)
     return btn
 end
-
 local function CreatePKTFrame(name, w, h, strata)
     local f = CreateFrame("Frame", name, UIParent, "BackdropTemplate")
     f:SetSize(w, h)
@@ -45,7 +40,6 @@ local function CreatePKTFrame(name, w, h, strata)
     f:SetBackdropBorderColor(0.8, 0.6, 0.2, 0.9)
     return f
 end
-
 local function AddSeparator(parent, anchor, y, alpha)
     local s = parent:CreateTexture(nil, "OVERLAY")
     s:SetHeight(1)
@@ -53,15 +47,12 @@ local function AddSeparator(parent, anchor, y, alpha)
     s:SetPoint(anchor .. "RIGHT", -8, y)
     s:SetColorTexture(0.8, 0.6, 0.2, alpha or 0.3)
 end
-
 local function CreateTrackerFrame()
     local f = CreatePKTFrame("PKTTrackerFrame", 320, 290, "MEDIUM")
     f:SetPoint("CENTER")
-
     local titleBar = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     titleBar:SetPoint("TOP", 0, -8)
     titleBar:SetText(C_GOLD .. "Profession Knowledge Treasures" .. C_END)
-
     local testBadgeBtn = CreateFrame("Button", nil, f)
     testBadgeBtn:SetPoint("TOPLEFT", 4, -4)
     testBadgeBtn:SetSize(60, 18)
@@ -74,9 +65,7 @@ local function CreateTrackerFrame()
         if PKT.testMode then PKT.ToggleTestProfUI() end
     end)
     f.testBadge = testBadge
-
     AddSeparator(f, "TOP", -32, 0.5)
-
     local treasureName = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     treasureName:SetPoint("TOPLEFT", 10, -44)
     treasureName:SetPoint("TOPRIGHT", -10, -44)
@@ -84,13 +73,11 @@ local function CreateTrackerFrame()
     treasureName:SetHeight(18)
     SetFontSize(treasureName, 14)
     f.treasureName = treasureName
-
     local zoneCoords = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     zoneCoords:SetPoint("TOP", 0, -74)
     zoneCoords:SetTextColor(0.9, 0.75, 0.4)
     SetFontSize(zoneCoords, 12)
     f.zoneCoords = zoneCoords
-
     local notes = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     notes:SetPoint("TOP", 0, -100)
     notes:SetTextColor(1, 1, 1)
@@ -98,15 +85,12 @@ local function CreateTrackerFrame()
     notes:SetJustifyH("CENTER")
     SetFontSize(notes, 12)
     f.notes = notes
-
     local progress = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     progress:SetPoint("TOP", 0, -144)
     progress:SetTextColor(0.8, 0.8, 0.8)
     SetFontSize(progress, 12)
     f.progress = progress
-
     AddSeparator(f, "TOP", -158, 0.2)
-
     local profBreakdown = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     profBreakdown:SetPoint("TOPLEFT", 10, -168)
     profBreakdown:SetPoint("TOPRIGHT", -10, -168)
@@ -114,9 +98,7 @@ local function CreateTrackerFrame()
     profBreakdown:SetHeight(40)
     SetFontSize(profBreakdown, 12)
     f.profBreakdown = profBreakdown
-
     AddSeparator(f, "BOTTOM", 42, 0.3)
-
     local zoneIndicator = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     zoneIndicator:SetPoint("BOTTOMLEFT", 10, 46)
     zoneIndicator:SetPoint("BOTTOMRIGHT", -10, 46)
@@ -124,39 +106,29 @@ local function CreateTrackerFrame()
     zoneIndicator:SetTextColor(0.9, 0.75, 0.4)
     SetFontSize(zoneIndicator, 12)
     f.zoneIndicator = zoneIndicator
-
     local btnW  = 54
     local btnGap = 3
-
     local prevBtn = MakeButton(f, "< Prev", btnW, function() PKT.GoPrev() end)
     prevBtn:SetPoint("BOTTOMLEFT", f, "BOTTOM", -(btnW * 2 + btnGap * 2 + btnW / 2), 10)
-
     local nearBtn = MakeButton(f, "Nearest", btnW, function() PKT.GoNearest() end)
     nearBtn:SetPoint("LEFT", prevBtn, "RIGHT", btnGap, 0)
-
     local firstBtn = MakeButton(f, "First", btnW, function() PKT.GoFirst() end)
     firstBtn:SetPoint("LEFT", nearBtn, "RIGHT", btnGap, 0)
-
     local nextBtn = MakeButton(f, "Next >", btnW, function() PKT.GoNext() end)
     nextBtn:SetPoint("LEFT", firstBtn, "RIGHT", btnGap, 0)
-
     local reloadBtn = MakeButton(f, "Reload", btnW, function() PKT.Reload() end)
     reloadBtn:SetPoint("LEFT", nextBtn, "RIGHT", btnGap, 0)
-
     local closeBtn = MakeButton(f, "X", 22, function() PKT.StopTracking(); f:Hide() end)
     closeBtn:SetPoint("TOPRIGHT", 0, 0)
-
     local settingsBtn = CreateFrame("Button", nil, f)
     settingsBtn:SetSize(16, 16)
     settingsBtn:SetPoint("RIGHT", closeBtn, "LEFT", -4, 0)
     settingsBtn:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
     settingsBtn:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
     settingsBtn:SetScript("OnClick", function() PKT.ToggleSettingsUI() end)
-
     f:Hide()
     return f
 end
-
 local function UpdateProfBreakdown()
     local breakdown = PKT.GetProfBreakdown()
     if #breakdown == 0 then trackerFrame.profBreakdown:SetText(""); return end
@@ -170,7 +142,6 @@ local function UpdateProfBreakdown()
     end
     trackerFrame.profBreakdown:SetText(tconcat(lines, "\n"))
 end
-
 function PKT.UpdateUI()
     if not trackerFrame or not trackerFrame:IsShown() then return end
     trackerFrame.testBadge:SetText(PKT.testMode and "[TEST]" or "")
@@ -206,7 +177,7 @@ function PKT.UpdateUI()
     local remaining = PKT.CountRemaining(list)
     local t, _, total = PKT.GetCurrent()
     if total == 0 then
-        trackerFrame.treasureName:SetText(C_GRAY .. "(No professions found - type /pkt reload)" .. C_END)
+        trackerFrame.treasureName:SetText(C_GRAY .. "(No professions found - type /pkt profs)" .. C_END)
         trackerFrame.zoneCoords:SetText("")
         trackerFrame.notes:SetText("")
         trackerFrame.progress:SetText("")
@@ -236,18 +207,15 @@ function PKT.UpdateUI()
     trackerFrame.progress:SetText(format(C_GRAY .. "%d remaining of %d total" .. C_END, remaining, total))
     UpdateProfBreakdown()
 end
-
 function PKT.ShowUI()
     if not trackerFrame then return end
     trackerFrame:Show()
     PKT.UpdateUI()
 end
-
 function PKT.HideUI()
     if not trackerFrame then return end
     trackerFrame:Hide()
 end
-
 function PKT.ToggleUI()
     if not trackerFrame then return end
     if trackerFrame:IsShown() then
@@ -257,9 +225,7 @@ function PKT.ToggleUI()
         PKT.UpdateUI()
     end
 end
-
 local dmfFrame
-
 local function BuildDMFContent(q)
     if not q then return C_GRAY .. "(No data for this profession.)" .. C_END end
     local lines = {}
@@ -289,7 +255,6 @@ local function BuildDMFContent(q)
     end
     return tconcat(lines, "\n")
 end
-
 local function UpdateDMFContent()
     if not dmfFrame then return end
     dmfFrame.testBadge:SetText(PKT.testMode and "[TEST]" or "")
@@ -303,27 +268,21 @@ local function UpdateDMFContent()
     dmfFrame.profName:SetText(entry.name .. "  " .. doneText)
     dmfFrame.content:SetText(BuildDMFContent(entry.quest))
 end
-
 local function CreateDMFFrame()
     local f = CreatePKTFrame("PKTDMFFrame", 390, 410, "HIGH")
     f:SetPoint("CENTER", 0, 0)
-
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -8)
     title:SetText(C_GOLD .. "Darkmoon Faire Knowledge Quests" .. C_END)
-
     local testBadge = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     testBadge:SetPoint("TOPLEFT", 6, -6)
     testBadge:SetTextColor(1, 0.2, 0.2)
     testBadge:SetText("")
     SetFontSize(testBadge, 12)
     f.testBadge = testBadge
-
     local closeBtn = MakeButton(f, "X", 22, function() f:Hide() end)
     closeBtn:SetPoint("TOPRIGHT", 0, 0)
-
     AddSeparator(f, "TOP", -26, 0.5)
-
     local profName = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     profName:SetPoint("TOPLEFT", 10, -34)
     profName:SetPoint("TOPRIGHT", -10, -34)
@@ -331,9 +290,7 @@ local function CreateDMFFrame()
     profName:SetHeight(18)
     SetFontSize(profName, 14)
     f.profName = profName
-
     AddSeparator(f, "TOP", -58, 0.3)
-
     local content = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     content:SetPoint("TOPLEFT", 12, -66)
     content:SetPoint("BOTTOMRIGHT", -12, 42)
@@ -341,12 +298,9 @@ local function CreateDMFFrame()
     content:SetJustifyV("TOP")
     SetFontSize(content, 12)
     f.content = content
-
     AddSeparator(f, "BOTTOM", 42, 0.3)
-
     local btnW  = 70
     local btnGap = 3
-
     local prevBtn = MakeButton(f, "< Prev", btnW, function()
         if #f.profList == 0 then return end
         f.profIndex = f.profIndex - 1
@@ -354,7 +308,6 @@ local function CreateDMFFrame()
         UpdateDMFContent()
     end)
     prevBtn:SetPoint("BOTTOM", f, "BOTTOM", -(btnW / 2 + btnGap), 10)
-
     local nextBtn = MakeButton(f, "Next >", btnW, function()
         if #f.profList == 0 then return end
         f.profIndex = f.profIndex + 1
@@ -362,17 +315,14 @@ local function CreateDMFFrame()
         UpdateDMFContent()
     end)
     nextBtn:SetPoint("BOTTOM", f, "BOTTOM", (btnW / 2 + btnGap), 10)
-
     f.profList  = {}
     f.profIndex = 1
     f:Hide()
     return f
 end
-
 local function EnsureDMFFrame()
     if not dmfFrame then dmfFrame = CreateDMFFrame() end
 end
-
 function PKT.ShowDMFUI()
     EnsureDMFFrame()
     dmfFrame.profList = PKT.GetActiveDMFProfs()
@@ -380,49 +330,38 @@ function PKT.ShowDMFUI()
     UpdateDMFContent()
     dmfFrame:Show()
 end
-
 function PKT.HideDMFUI()
     if dmfFrame then dmfFrame:Hide() end
 end
-
 function PKT.IsDMFShown()
     return dmfFrame and dmfFrame:IsShown()
 end
-
 function PKT.ToggleDMFUI()
     EnsureDMFFrame()
     if dmfFrame:IsShown() then dmfFrame:Hide()
     else PKT.ShowDMFUI() end
 end
-
 local settingsFrame
-
 local WAYPOINT_OPTIONS = {
     { key = "both",   label = "Native + TomTom",    desc = "Sets game waypoint arrow and TomTom arrow" },
     { key = "native", label = "Native Only",         desc = "Uses the game's built-in waypoint arrow"   },
     { key = "tomtom", label = "TomTom Only",         desc = "Uses TomTom's crazy arrow (requires TomTom)"},
     { key = "none",   label = "None (map pin only)", desc = "Places a map marker, no direction arrow"   },
 }
-
 local function CreateSettingsFrame()
-    local f = CreatePKTFrame("PKTSettingsFrame", 270, 200, "HIGH")
+    local f = CreatePKTFrame("PKTSettingsFrame", 270, 248, "HIGH")
     f:SetPoint("LEFT", trackerFrame, "RIGHT", 6, 0)
-
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -8)
     title:SetText(C_GOLD .. "PKT Settings" .. C_END)
-
     local closeBtn = MakeButton(f, "X", 22, function() f:Hide() end)
     closeBtn:SetPoint("TOPRIGHT", 0, 0)
-
     AddSeparator(f, "TOP", -26, 0.5)
-
     local sysLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sysLabel:SetPoint("TOPLEFT", 10, -34)
     sysLabel:SetText("Waypoint System:")
     sysLabel:SetTextColor(0.9, 0.75, 0.4)
     SetFontSize(sysLabel, 12)
-
     f.radioButtons = {}
     for i, opt in ipairs(WAYPOINT_OPTIONS) do
         local rb = CreateFrame("CheckButton", "PKTRadio_" .. opt.key, f, "UIRadioButtonTemplate")
@@ -435,27 +374,39 @@ local function CreateSettingsFrame()
             PKT.OnWaypointSystemChanged(opt.key)
         end)
         rb._key = opt.key
-
         local lbl = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         lbl:SetPoint("LEFT", rb, "RIGHT", 4, 0)
         lbl:SetText(opt.label)
         SetFontSize(lbl, 12)
-
         f.radioButtons[i] = rb
     end
-
+    AddSeparator(f, "TOP", -152, 0.3)
+    local profLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    profLabel:SetPoint("TOPLEFT", 10, -160)
+    profLabel:SetText("Professions:")
+    profLabel:SetTextColor(0.9, 0.75, 0.4)
+    SetFontSize(profLabel, 12)
+    local profBtn = MakeButton(f, "Select Manually", 150, function()
+        f:Hide()
+        PKT.ShowManualProfUI(f)
+    end)
+    profBtn:SetPoint("TOPLEFT", 16, -178)
+    local profHint = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    profHint:SetPoint("TOPLEFT", 10, -206)
+    profHint:SetPoint("TOPRIGHT", -10, -206)
+    profHint:SetJustifyH("LEFT")
+    profHint:SetText("|cff888888Use if auto-detection misses your professions.|r")
+    SetFontSize(profHint, 11)
     f.Refresh = function()
         local current = PKT.GetWaypointSystem()
         for _, btn in ipairs(f.radioButtons) do
             btn:SetChecked(btn._key == current)
         end
     end
-
     f:SetScript("OnShow", f.Refresh)
     f:Hide()
     return f
 end
-
 function PKT.ToggleSettingsUI()
     if not settingsFrame then settingsFrame = CreateSettingsFrame() end
     if settingsFrame:IsShown() then
@@ -464,7 +415,6 @@ function PKT.ToggleSettingsUI()
         settingsFrame:Show()
     end
 end
-
 local ldb = LibStub("LibDataBroker-1.1"):NewDataObject("ProfessionKnowledgeTreasures", {
     type = "launcher",
     text = "PKT",
@@ -485,29 +435,22 @@ local ldb = LibStub("LibDataBroker-1.1"):NewDataObject("ProfessionKnowledgeTreas
         tooltip:AddLine("Middle-click: settings", 1, 1, 1)
     end,
 })
-
 local testProfFrame
-
 local function CreateTestProfFrame()
     local f = CreatePKTFrame("PKTTestProfFrame", 240, 230, "MEDIUM")
     f:SetPoint("LEFT", trackerFrame, "RIGHT", 6, 0)
-
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", 0, -8)
     title:SetText(C_RED .. "Test Professions" .. C_END)
     SetFontSize(title, 14)
-
     local closeBtn = MakeButton(f, "X", 22, function() f:Hide() end)
     closeBtn:SetPoint("TOPRIGHT", 0, 0)
-
     AddSeparator(f, "TOP", -24, 0.5)
-
     local sortedProfs = {}
     for profID, name in pairs(PKT.PROF_NAMES) do
         sortedProfs[#sortedProfs + 1] = { id = profID, name = name }
     end
     table.sort(sortedProfs, function(a, b) return a.name < b.name end)
-
     local btnW   = 106
     local btnH   = 20
     local startY = -32
@@ -522,14 +465,12 @@ local function CreateTestProfFrame()
             PKT.UpdateUI()
             PKT.RefreshTestProfButtons()
         end)
-        btn:SetPoint("TOPLEFT", 8 + col * (btnW + 4), startY - row * (btnH + 4))
+        btn:SetPoint("TOPLEFT", (f:GetWidth() - btnW * 2 - 4) / 2 + col * (btnW + 4), startY - row * (btnH + 4))
         btn:SetSize(btnW, btnH)
         btn._profName = entry.name
         f.profButtons[entry.id] = btn
     end
-
     AddSeparator(f, "BOTTOM", 36, 0.3)
-
     local allBtn = MakeButton(f, "All", btnW, function()
         for profID in pairs(PKT.PROF_NAMES) do PKT.testProfs[profID] = true end
         PKT.Reload()
@@ -537,7 +478,6 @@ local function CreateTestProfFrame()
         PKT.RefreshTestProfButtons()
     end)
     allBtn:SetPoint("BOTTOMLEFT", 8, 8)
-
     local noneBtn = MakeButton(f, "None", btnW, function()
         PKT.testProfs = {}
         PKT.Reload()
@@ -545,11 +485,9 @@ local function CreateTestProfFrame()
         PKT.RefreshTestProfButtons()
     end)
     noneBtn:SetPoint("BOTTOMRIGHT", -8, 8)
-
     f:Hide()
     return f
 end
-
 function PKT.RefreshTestProfButtons()
     if not testProfFrame or not testProfFrame.profButtons then return end
     for profID, btn in pairs(testProfFrame.profButtons) do
@@ -560,17 +498,14 @@ function PKT.RefreshTestProfButtons()
         end
     end
 end
-
 function PKT.ShowTestProfUI()
     if not testProfFrame then testProfFrame = CreateTestProfFrame() end
     testProfFrame:Show()
     PKT.RefreshTestProfButtons()
 end
-
 function PKT.HideTestProfUI()
     if testProfFrame then testProfFrame:Hide() end
 end
-
 function PKT.ToggleTestProfUI()
     if not testProfFrame then testProfFrame = CreateTestProfFrame() end
     if testProfFrame:IsShown() then
@@ -580,11 +515,124 @@ function PKT.ToggleTestProfUI()
         PKT.RefreshTestProfButtons()
     end
 end
-
+local manualProfFrame
+local function CreateManualProfFrame()
+    local f = CreatePKTFrame("PKTManualProfFrame", 250, 264, "HIGH")
+    f:SetPoint("CENTER", 0, 0)
+    local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOP", 0, -8)
+    title:SetText(C_GOLD .. "Select Your Professions" .. C_END)
+    SetFontSize(title, 14)
+    local closeBtn = MakeButton(f, "X", 22, function() f:Hide() end)
+    closeBtn:SetPoint("TOPRIGHT", 0, 0)
+    AddSeparator(f, "TOP", -24, 0.5)
+    local help = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    help:SetPoint("TOPLEFT", 10, -30)
+    help:SetPoint("TOPRIGHT", -10, -30)
+    help:SetJustifyH("CENTER")
+    help:SetHeight(42)
+    help:SetText("|cffaaaaaaPick up to 2 professions to track. This overrides auto-detection; press Clear to return to automatic.|r")
+    SetFontSize(help, 11)
+    local sortedProfs = {}
+    for profID, name in pairs(PKT.PROF_NAMES) do
+        sortedProfs[#sortedProfs + 1] = { id = profID, name = name }
+    end
+    table.sort(sortedProfs, function(a, b) return a.name < b.name end)
+    local btnW   = 106
+    local btnH   = 20
+    local startY = -78
+    f.profButtons = {}
+    local function onProfClick(entryID)
+        local manual = PKT.GetManualProfs()
+        local selected = manual[entryID] and true or false
+        if not selected then
+            local count = 0
+            for _, on in pairs(manual) do if on then count = count + 1 end end
+            if count >= 2 then
+                UIErrorsFrame:AddMessage("PKT: You can select at most 2 professions \226\128\148 deselect one first.", 1, 0.2, 0.2)
+                return
+            end
+        end
+        PKT.SetManualProf(entryID, not selected)
+        PKT.Reload()
+        if #PKT.GetRouteList() > 0 then PKT.ShowUI() end
+        PKT.RefreshManualProfButtons()
+    end
+    local function makeProfButton(entry, x, y)
+        local btn = MakeButton(f, entry.name, btnW, function() onProfClick(entry.id) end)
+        btn:SetPoint("TOPLEFT", x, y)
+        btn:SetSize(btnW, btnH)
+        btn._profName = entry.name
+        f.profButtons[entry.id] = btn
+    end
+    local grid, centerEntry = {}, nil
+    for _, entry in ipairs(sortedProfs) do
+        if entry.id == 2913 then centerEntry = entry else grid[#grid + 1] = entry end
+    end
+    local half  = math.ceil(#grid / 2)
+    local leftX = (f:GetWidth() - btnW * 2 - 4) / 2
+    for i, entry in ipairs(grid) do
+        local col = (i <= half) and 0 or 1
+        local row = (i <= half) and (i - 1) or (i - half - 1)
+        makeProfButton(entry, leftX + col * (btnW + 4), startY - row * (btnH + 4))
+    end
+    if centerEntry then
+        makeProfButton(centerEntry, (f:GetWidth() - btnW) / 2, startY - half * (btnH + 4))
+    end
+    AddSeparator(f, "BOTTOM", 36, 0.3)
+    local clearBtn = MakeButton(f, "Clear", btnW, function()
+        for profID in pairs(PKT.PROF_NAMES) do PKT.SetManualProf(profID, false) end
+        PKT.Reload()
+        if #PKT.GetRouteList() > 0 then PKT.ShowUI() else PKT.UpdateUI() end
+        PKT.RefreshManualProfButtons()
+    end)
+    clearBtn:SetPoint("BOTTOMLEFT", 8, 8)
+    local doneBtn = MakeButton(f, "Done", btnW, function() f:Hide() end)
+    doneBtn:SetPoint("BOTTOMRIGHT", -8, 8)
+    f:Hide()
+    return f
+end
+function PKT.RefreshManualProfButtons()
+    if not manualProfFrame or not manualProfFrame.profButtons then return end
+    local manual = PKT.GetManualProfs()
+    for profID, btn in pairs(manualProfFrame.profButtons) do
+        if manual[profID] then
+            btn:SetText(C_YELLOW .. btn._profName .. C_END)
+        else
+            btn:SetText(C_SOFTWHITE .. btn._profName .. C_END)
+        end
+    end
+end
+function PKT.ShowManualProfUI(anchorTo)
+    if not manualProfFrame then manualProfFrame = CreateManualProfFrame() end
+    if anchorTo then
+        local point, relativeTo, relativePoint, x, y = anchorTo:GetPoint()
+        if point then
+            manualProfFrame:ClearAllPoints()
+            manualProfFrame:SetPoint(point, relativeTo, relativePoint, x, y)
+        end
+    end
+    manualProfFrame:Show()
+    PKT.RefreshManualProfButtons()
+end
+function PKT.HideManualProfUI()
+    if manualProfFrame then manualProfFrame:Hide() end
+end
+function PKT.ToggleManualProfUI()
+    if not manualProfFrame then manualProfFrame = CreateManualProfFrame() end
+    if manualProfFrame:IsShown() then
+        manualProfFrame:Hide()
+    else
+        manualProfFrame:Show()
+        PKT.RefreshManualProfButtons()
+    end
+end
 function PKT.InitUI()
     PKT_SavedVars = PKT_SavedVars or {}
     PKT_SavedVars.minimap = PKT_SavedVars.minimap or { hide = false, minimapPos = 225 }
     if PKT_SavedVars.waypointSystem == nil then PKT_SavedVars.waypointSystem = "both" end
+    PKT_CharVars = PKT_CharVars or {}
+    PKT_CharVars.manualProfs = PKT_CharVars.manualProfs or {}
     trackerFrame = CreateTrackerFrame()
     local icon = LibStub("LibDBIcon-1.0")
     icon:Register("ProfessionKnowledgeTreasures", ldb, PKT_SavedVars.minimap)

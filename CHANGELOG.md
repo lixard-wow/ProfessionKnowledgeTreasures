@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.1
+
+### Bug Fixes
+- Fixed all 11 professions being tracked regardless of what the character actually knows — the tracker now correctly filters to your learned professions, so collected treasures show complete and the window no longer pops up on a finished character
+- Login detection now waits for quest-completion data to finish syncing before deciding what's collected, preventing the tracker from appearing on a fully-cleared character
+- Tracker now closes itself automatically once all treasures are confirmed collected, even if quest data finishes loading after login
+- Fixed professions not being detected on alts when profession/skill data loads after login — PKT now re-scans as professions become available and rebuilds the route, instead of relying on a single early scan
+- Fixed a profession in a later character slot being skipped when an earlier slot was empty
+- Profession detection is now locale-proof — it matches by the base profession skill-line ID (a stable number, not text) as well as the game's own localized profession name, so it works on non-English clients. This fixes detection failing on alts of a non-English (e.g. German) client, where it previously only worked on the first character of a session
+- `/pkt debug` now reports the actual detection result for each tracked profession
+- Fixed the waypoint flipping back and forth between two treasures that sit on different maps within the same zone group (e.g. Pure Void Crystal in Voidstorm and Miniaturized Transport Skiff in Slayer's Rise). All "nearest" distance calculations — the next-treasure waypoint, the travel-portal suggestion, and the in-zone route ordering — now use world positions so distances are valid across maps in a group
+
+### Improvements
+- Added a manual profession picker: if PKT can't auto-detect your professions (or detects them wrong), open the picker and choose them by hand. A manual selection is saved per character and overrides auto-detection; press **Clear** to return to automatic. The picker opens automatically when nothing is detected, and you can open it anytime with `/pkt profs` or the **Select Manually** button in the Settings panel.
+
+---
+
 ## 1.2.0
 
 ### Bug Fixes

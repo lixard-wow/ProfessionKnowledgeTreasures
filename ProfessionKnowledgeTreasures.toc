@@ -1,4 +1,4 @@
-## Interface: 120005
+## Interface: 120100, 120007, 120005
 ## Title: Profession Knowledge Treasures
 ## Notes: Tracks and routes Midnight profession knowledge treasures filtered to your character's professions. Type /pkt to open.
 ## Author: Lixard

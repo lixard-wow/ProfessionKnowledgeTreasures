@@ -2,7 +2,7 @@
 ## Title: Profession Knowledge Treasures
 ## Notes: Tracks and routes Midnight profession knowledge treasures filtered to your character's professions. Type /pkt to open.
 ## Author: Lixard
-## Version: 1.2.1
+## Version: 1.2.2
 ## OptionalDeps: TomTom
 ## SavedVariables: PKT_SavedVars
 ## SavedVariablesPerCharacter: PKT_CharVars

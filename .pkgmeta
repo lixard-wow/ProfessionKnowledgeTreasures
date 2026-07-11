@@ -1,8 +1,7 @@
 package-as: ProfessionKnowledgeTreasures
-curse-project-id: 1488283
-changelog: CHANGELOG.md
-changelog-title: ProfessionKnowledgeTreasures
-changelog-type: markdown
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
 ignore:
   - .github
   - .gitignore

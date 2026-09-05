@@ -8,3 +8,7 @@ ignore:
   - .pkgmeta
   - "*.html"
   - README.md
+  - CLAUDE.md
+  - docs
+  - .vscode
+  - .luacheckrc

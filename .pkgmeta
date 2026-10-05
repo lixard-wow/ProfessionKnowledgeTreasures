@@ -1,0 +1,14 @@
+package-as: ProfessionKnowledgeTreasures
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+ignore:
+  - .github
+  - .gitignore
+  - .pkgmeta
+  - "*.html"
+  - README.md
+  - CURSEFORGE.md
+  - docs
+  - .vscode
+  - .luacheckrc

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The settings button is now a gear on every look, including Workbench.
+
 ## Version 1.3.0
 
 ### New

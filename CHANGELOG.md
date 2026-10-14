@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## Version 1.3.1
 
-- The settings button is now a gear on every look, including Workbench.
+### Updated
+
+- Updated for **World of Warcraft Patch 12.1.5**.
 
 ## Version 1.3.0
 

@@ -16,7 +16,7 @@ Find every profession knowledge treasure in Midnight and always know where to go
 - Tracks your progress for each profession.
 - Short tips for tricky treasures, including ones hidden by phasing or gated behind a quest or achievement.
 - A Darkmoon Faire helper for each profession's monthly +2 knowledge quest, with a step-by-step mini bar.
-- Three looks: Artisan's Ledger, Workbench and Slate.
+- Five looks: Artisan's Ledger, Horde, Alliance, Workbench and Slate.
 
 Zones: Silvermoon City, Eversong Woods, Zul'Aman, Atal'Aman, Voidstorm and Slayer's Rise, and Harandar and The Den.
 

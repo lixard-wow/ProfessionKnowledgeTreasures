@@ -1243,7 +1243,9 @@ end
 local function BuildPicker(firstRun)
     local c, m = T.colors, T.metrics
     local cardW, gap, pad = 214, 12, 20
-    local width = cardW * 3 + gap * 2 + pad * 2
+    local cols = math.min(#PKT.THEME_ORDER, 3)
+    local rows = math.ceil(#PKT.THEME_ORDER / cols)
+    local width = cardW * cols + gap * (cols - 1) + pad * 2
     local f = W.Window(T, width, 420, "DIALOG", false)
     f:SetPoint("CENTER", 0, 40)
     local buttons = {}
@@ -1263,7 +1265,6 @@ local function BuildPicker(firstRun)
         local PT = PKT.THEMES[key]
         local card = CreateFrame("Frame", nil, f)
         card:SetWidth(cardW)
-        card:SetPoint("TOPLEFT", pad + (i - 1) * (cardW + gap), -y)
         W.Box(card, c.surface, c.surfaceBorder, m.surfaceRadius)
         local preview = BuildPreview(card, PT, cardW - 20, 150)
         preview:SetPoint("TOP", 0, -10)
@@ -1286,8 +1287,12 @@ local function BuildPicker(firstRun)
         tallest = max(tallest, h)
         f.cards[i] = card
     end
-    for _, card in ipairs(f.cards) do card:SetHeight(tallest) end
-    f:SetHeight(floor(y + tallest + pad + inset + 0.5))
+    for i, card in ipairs(f.cards) do
+        card:SetHeight(tallest)
+        local col, row = (i - 1) % cols, floor((i - 1) / cols)
+        card:SetPoint("TOPLEFT", pad + col * (cardW + gap), -(y + row * (tallest + gap)))
+    end
+    f:SetHeight(floor(y + rows * tallest + (rows - 1) * gap + pad + inset + 0.5))
     function f:Refresh()
         local chosen = PKT.HasChosenTheme() and PKT_SavedVars.theme
         for _, card in ipairs(self.cards) do

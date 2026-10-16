@@ -160,7 +160,7 @@ function W.Bar(parent, T)
     local bar = CreateFrame("Frame", nil, parent)
     bar:SetHeight(T.metrics.barHeight)
     local radius = 0
-    if T.key == "ledger" then
+    if T.style.brackets then
         W.Box(bar, T.colors.track, T.colors.line, radius)
     else
         local track = W.Shape(bar, "BACKGROUND", 0, radius)

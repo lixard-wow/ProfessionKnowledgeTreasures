@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### New
+
+- **Two new looks: Horde and Alliance.** The Artisan's Ledger style in faction colors: **Horde** (blood red and iron) and **Alliance** (royal blue and gold). Pick one with **`/pkt theme`** or from **Settings**.
+
+### Changed
+
+- The look picker now shows its cards in rows of three.
+
 ## Version 1.3.1
 
 ### Updated
